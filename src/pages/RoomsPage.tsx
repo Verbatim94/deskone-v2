@@ -1,0 +1,643 @@
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  CalendarDays,
+  LoaderCircle,
+  MapPinned,
+  Search,
+  Sparkles,
+  SquareMousePointer,
+  Users,
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/sonner";
+import { useAuth } from "@/features/auth/context/useAuth";
+import {
+  cancelRoomReservation,
+  createRoomReservation,
+  getRoomAvailability,
+  listAccessibleRooms,
+} from "@/features/rooms/api";
+import type { RoomBookingSegment, RoomDesk, RoomDeskStatus } from "@/features/rooms/types";
+import { EdgeClientError } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+
+const GRID_CELL_SIZE = 24;
+
+function getTodayIsoDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateLabel(value: string) {
+  return new Intl.DateTimeFormat("it-IT", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  }).format(new Date(`${value}T00:00:00`));
+}
+
+function formatSegmentLabel(segment: RoomBookingSegment) {
+  return segment === "full" ? "Full day" : segment === "am" ? "Morning" : "Afternoon";
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof EdgeClientError ? error.message : fallback;
+}
+
+function statusClasses(status: RoomDeskStatus) {
+  switch (status) {
+    case "available":
+      return "border-cyan-500 bg-white text-cyan-700 shadow-sm";
+    case "yours":
+      return "border-violet-500 bg-violet-50 text-violet-700 shadow-sm";
+    case "reserved":
+      return "border-rose-300 bg-rose-50 text-rose-500";
+    case "restricted":
+      return "border-slate-300 bg-slate-100 text-slate-400";
+    default:
+      return "border-slate-300 bg-white text-slate-500";
+  }
+}
+
+function SegmentButton({
+  segment,
+  activeSegment,
+  onClick,
+}: {
+  segment: RoomBookingSegment;
+  activeSegment: RoomBookingSegment;
+  onClick: (segment: RoomBookingSegment) => void;
+}) {
+  const label = segment === "full" ? "Full day" : segment === "am" ? "Morning" : "Afternoon";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(segment)}
+      className={cn(
+        "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+        activeSegment === segment
+          ? "border-sky-200 bg-sky-50 text-sky-800"
+          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+export default function RoomsPage() {
+  const queryClient = useQueryClient();
+  const { activeOrganization, activeOrganizationId, user } = useAuth();
+  const [roomSearch, setRoomSearch] = useState("");
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedDeskId, setSelectedDeskId] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState(getTodayIsoDate);
+  const [selectedSegment, setSelectedSegment] = useState<RoomBookingSegment>("full");
+  const [reservationNotes, setReservationNotes] = useState("");
+  const deferredRoomSearch = useDeferredValue(roomSearch);
+
+  const roomsQuery = useQuery({
+    queryKey: ["rooms-overview", activeOrganizationId],
+    enabled: Boolean(activeOrganizationId),
+    queryFn: () => listAccessibleRooms(activeOrganizationId!),
+    staleTime: 30_000,
+  });
+
+  const rooms = useMemo(() => roomsQuery.data?.rooms ?? [], [roomsQuery.data?.rooms]);
+
+  useEffect(() => {
+    if (!rooms.length) {
+      return;
+    }
+
+    if (!selectedRoomId || !rooms.some((room) => room.id === selectedRoomId)) {
+      setSelectedRoomId(rooms[0].id);
+      setSelectedDeskId(null);
+    }
+  }, [rooms, selectedRoomId]);
+
+  const filteredRooms = useMemo(() => {
+    const search = deferredRoomSearch.trim().toLowerCase();
+    if (!search) {
+      return rooms;
+    }
+
+    return rooms.filter((room) =>
+      `${room.name} ${room.slug} ${room.description ?? ""}`.toLowerCase().includes(search),
+    );
+  }, [deferredRoomSearch, rooms]);
+
+  const selectedRoom = useMemo(
+    () => rooms.find((room) => room.id === selectedRoomId) ?? null,
+    [rooms, selectedRoomId],
+  );
+
+  const availabilityQuery = useQuery({
+    queryKey: ["room-availability", activeOrganizationId, selectedRoomId, selectedDate, selectedSegment],
+    enabled: Boolean(activeOrganizationId && selectedRoomId),
+    queryFn: () =>
+      getRoomAvailability({
+        organizationId: activeOrganizationId!,
+        roomId: selectedRoomId!,
+        date: selectedDate,
+        segment: selectedSegment,
+      }),
+    staleTime: 5_000,
+  });
+
+  const selectedDesk = useMemo(
+    () => availabilityQuery.data?.desks.find((desk) => desk.id === selectedDeskId) ?? null,
+    [availabilityQuery.data?.desks, selectedDeskId],
+  );
+
+  const reserveMutation = useMutation({
+    mutationFn: async (desk: RoomDesk) =>
+      createRoomReservation({
+        organizationId: activeOrganizationId!,
+        roomId: availabilityQuery.data!.room.id,
+        deskId: desk.id,
+        date: selectedDate,
+        segment: selectedSegment,
+        notes: reservationNotes || null,
+      }),
+    onSuccess: (reservation) => {
+      toast.success(`Desk ${reservation.deskLabel ?? "selected"} booked.`);
+      setReservationNotes("");
+      void queryClient.invalidateQueries({ queryKey: ["room-availability", activeOrganizationId, selectedRoomId] });
+      void queryClient.invalidateQueries({ queryKey: ["rooms-overview", activeOrganizationId] });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Unable to create the reservation."));
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async (reservationId: string) =>
+      cancelRoomReservation({
+        organizationId: activeOrganizationId!,
+        reservationId,
+      }),
+    onSuccess: () => {
+      toast.success("Reservation cancelled.");
+      void queryClient.invalidateQueries({ queryKey: ["room-availability", activeOrganizationId, selectedRoomId] });
+      void queryClient.invalidateQueries({ queryKey: ["rooms-overview", activeOrganizationId] });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Unable to cancel the reservation."));
+    },
+  });
+
+  const canvasWidth = (availabilityQuery.data?.room.gridWidth ?? 18) * GRID_CELL_SIZE;
+  const canvasHeight = (availabilityQuery.data?.room.gridHeight ?? 14) * GRID_CELL_SIZE;
+  const currentReservation = availabilityQuery.data?.currentUserReservation ?? null;
+  const segmentLabel = formatSegmentLabel(selectedSegment);
+  const totalAccessibleDesks = rooms.reduce((sum, room) => sum + room.deskCount, 0);
+  const roomMixLabel = rooms.length
+    ? `${rooms.filter((room) => room.accessRole === "admin").length} admin-controlled`
+    : "No rooms yet";
+  const statusSummary = availabilityQuery.data?.summary;
+
+  return (
+    <div className="space-y-6">
+      <section className="overflow-hidden rounded-[2.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86)_42%,rgba(224,242,254,0.7))] p-6 shadow-[0_32px_110px_-58px_rgba(15,23,42,0.52)] backdrop-blur sm:p-8">
+        <div className="grid gap-8 xl:grid-cols-[1.12fr,0.88fr]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="rounded-full bg-sky-100 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-100">
+                Premium booking
+              </Badge>
+              <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+                {activeOrganization?.name ?? "No organization"}
+              </Badge>
+            </div>
+
+            <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+              Choose the right neighborhood, read the live map and secure the best desk in one flow.
+            </h1>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+              Rooms now behave like a polished product surface: curated access, instant availability, half-day
+              booking logic and a map that feels calm instead of administrative.
+            </p>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <SegmentButton segment="full" activeSegment={selectedSegment} onClick={setSelectedSegment} />
+              <SegmentButton segment="am" activeSegment={selectedSegment} onClick={setSelectedSegment} />
+              <SegmentButton segment="pm" activeSegment={selectedSegment} onClick={setSelectedSegment} />
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => setSelectedDate(event.target.value)}
+                className="h-11 w-[220px] rounded-full border-slate-200 bg-white/95 px-4"
+              />
+            </div>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[1.6rem] border border-white/80 bg-white/80 p-4 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Accessible rooms</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{rooms.length}</p>
+                <p className="mt-1 text-sm text-slate-500">Visible in your current environment.</p>
+              </div>
+              <div className="rounded-[1.6rem] border border-white/80 bg-white/80 p-4 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Desk capacity</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{totalAccessibleDesks}</p>
+                <p className="mt-1 text-sm text-slate-500">Total desks across your accessible neighborhoods.</p>
+              </div>
+              <div className="rounded-[1.6rem] border border-white/80 bg-white/80 p-4 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Access profile</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{roomMixLabel}</p>
+                <p className="mt-1 text-sm text-slate-500">Direct admin control and shared room access combined.</p>
+              </div>
+            </div>
+          </div>
+
+          <Card className="rounded-[2rem] border-slate-200/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.82))] text-white shadow-none">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-white">Booking focus</p>
+                <Badge className="rounded-full bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-sky-100 hover:bg-white/10">
+                  {segmentLabel}
+                </Badge>
+              </div>
+              <div className="mt-4 grid gap-3 text-sm text-slate-100">
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                  <span className="font-semibold text-white">{user?.displayName ?? user?.fullName}</span>
+                  <span className="mt-1 block text-slate-300">{user?.username}</span>
+                </div>
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                  <span className="font-semibold text-white">{formatDateLabel(selectedDate)}</span>
+                  <span className="mt-1 block text-slate-300">{segmentLabel}</span>
+                </div>
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                  {currentReservation ? (
+                    <>
+                      <span className="font-semibold text-white">
+                        {currentReservation.roomName} · {currentReservation.deskLabel ?? "Desk"}
+                      </span>
+                      <span className="mt-1 block text-slate-300">Your spot is already secured for this view.</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-white">No active booking for this view</span>
+                      <span className="mt-1 block text-slate-300">Pick an available desk to reserve it instantly.</span>
+                    </>
+                  )}
+                </div>
+                <div className="rounded-[1.4rem] border border-sky-400/20 bg-sky-400/10 p-4 text-sky-50">
+                  <p className="text-xs uppercase tracking-[0.2em] text-sky-100/80">Selected room</p>
+                  <p className="mt-2 text-lg font-semibold text-white">{selectedRoom?.name ?? "Pick a room"}</p>
+                  <p className="mt-1 text-sm text-sky-100/80">
+                    {selectedRoom
+                      ? `${selectedRoom.deskCount} desks · ${selectedRoom.zoneCount} zones · ${selectedRoom.accessRole} access`
+                      : "The map and inspector will adapt as soon as you choose a neighborhood."}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-[320px,1fr,340px]">
+        <Card className="rounded-[2rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+              <MapPinned className="h-5 w-5 text-sky-700" />
+              Curated rooms
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={roomSearch}
+                onChange={(event) => setRoomSearch(event.target.value)}
+                placeholder="Search rooms, slugs or descriptions..."
+                className="h-11 rounded-2xl border-slate-200 bg-slate-50 pl-11"
+              />
+            </div>
+
+            <ScrollArea className="h-[620px] rounded-[1.4rem] border border-slate-200 bg-slate-50/70">
+              <div className="grid gap-3 p-3">
+                {roomsQuery.isLoading ? (
+                    <div className="rounded-[1.2rem] border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                      <LoaderCircle className="mb-3 h-4 w-4 animate-spin text-sky-700" />
+                      Building your room directory...
+                    </div>
+                  ) : null}
+
+                {!roomsQuery.isLoading && !filteredRooms.length ? (
+                  <div className="rounded-[1.2rem] border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+                    Nothing matched this search inside your accessible rooms.
+                  </div>
+                ) : null}
+
+                {filteredRooms.map((room) => {
+                  const isActive = room.id === selectedRoomId;
+
+                  return (
+                    <button
+                      key={room.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedRoomId(room.id);
+                        setSelectedDeskId(null);
+                      }}
+                      className={cn(
+                        "rounded-[1.4rem] border p-4 text-left transition-all",
+                        isActive
+                          ? "border-sky-200 bg-[linear-gradient(180deg,rgba(240,249,255,0.92),rgba(255,255,255,0.98))] text-sky-900 shadow-sm"
+                          : "border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:bg-slate-50",
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-base font-semibold">{room.name}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{room.slug}</p>
+                        </div>
+                        <Badge
+                          className={cn(
+                            "rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]",
+                            room.accessRole === "admin"
+                              ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-100"
+                              : "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
+                          )}
+                        >
+                          {room.accessRole}
+                        </Badge>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        {room.description ?? "No description yet, but the room is ready for booking."}
+                      </p>
+                      <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="rounded-xl bg-slate-50 px-2 py-2 text-slate-600">
+                          <span className="block font-semibold text-slate-900">{room.deskCount}</span>
+                          desks
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-2 py-2 text-slate-600">
+                          <span className="block font-semibold text-slate-900">{room.zoneCount}</span>
+                          zones
+                        </div>
+                        <div className="rounded-xl bg-slate-50 px-2 py-2 text-slate-600">
+                          <span className="block font-semibold text-slate-900">{room.groupAccessCount}</span>
+                          groups
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[2rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+          <CardHeader className="space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+                  <SquareMousePointer className="h-5 w-5 text-sky-700" />
+                  {availabilityQuery.data?.room.name ?? "Room map"}
+                </CardTitle>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {selectedRoom?.description ??
+                    "Inspect the live desk map, compare desk states and book the right spot without leaving the page."}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                  {selectedRoom?.deskCount ?? 0} desks
+                </Badge>
+                <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                  {segmentLabel}
+                </Badge>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Open</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{statusSummary?.availableDesks ?? 0}</p>
+              </div>
+              <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Reserved</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{statusSummary?.reservedDesks ?? 0}</p>
+              </div>
+              <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Your desks</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{statusSummary?.yourDesks ?? 0}</p>
+              </div>
+              <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Restricted</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{statusSummary?.restrictedDesks ?? 0}</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {availabilityQuery.isLoading ? (
+              <div className="flex min-h-[540px] items-center justify-center rounded-[1.6rem] border border-slate-200 bg-slate-50 text-sm text-slate-500">
+                <LoaderCircle className="mr-2 h-5 w-5 animate-spin text-sky-700" />
+                Calibrating the live room map...
+              </div>
+            ) : null}
+
+            {!availabilityQuery.isLoading && !availabilityQuery.data ? (
+              <div className="flex min-h-[540px] items-center justify-center rounded-[1.6rem] border border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500">
+                Pick a room to inspect its desks.
+              </div>
+            ) : null}
+
+            {availabilityQuery.data ? (
+              <div className="space-y-5">
+                <div className="overflow-x-auto rounded-[1.6rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <div
+                    className="relative rounded-[1.8rem] border border-slate-200 bg-[linear-gradient(0deg,transparent_23px,rgba(226,232,240,0.8)_24px),linear-gradient(90deg,transparent_23px,rgba(226,232,240,0.8)_24px)] [background-size:24px_24px] shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]"
+                    style={{
+                      width: canvasWidth,
+                      height: canvasHeight,
+                    }}
+                  >
+                    {availabilityQuery.data.zones.map((zone) => (
+                      <div
+                        key={zone.id}
+                        className="absolute rounded-[1.5rem] border-2 border-dashed bg-white/60 px-4 py-3 shadow-sm"
+                        style={{
+                          left: zone.x * GRID_CELL_SIZE,
+                          top: zone.y * GRID_CELL_SIZE,
+                          width: zone.width * GRID_CELL_SIZE,
+                          height: zone.height * GRID_CELL_SIZE,
+                          borderColor: zone.color ?? "#94A3B8",
+                        }}
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: zone.color ?? "#334155" }}>
+                          {zone.name}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">{zone.zoneType}</p>
+                      </div>
+                    ))}
+
+                    {availabilityQuery.data.desks.map((desk) => (
+                      <button
+                        key={desk.id}
+                        type="button"
+                        onClick={() => setSelectedDeskId(desk.id)}
+                        className={cn(
+                          "absolute flex items-center justify-center rounded-xl border-2 text-xs font-semibold transition-all duration-150 hover:-translate-y-0.5",
+                          statusClasses(desk.status),
+                          selectedDeskId === desk.id && "ring-4 ring-sky-200",
+                        )}
+                        style={{
+                          left: desk.x * GRID_CELL_SIZE,
+                          top: desk.y * GRID_CELL_SIZE,
+                          width: desk.width * GRID_CELL_SIZE,
+                          height: desk.height * GRID_CELL_SIZE,
+                          transform: `rotate(${desk.rotationDegrees}deg)`,
+                        }}
+                      >
+                        {desk.label ?? "Desk"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {[
+                    { key: "available", label: "Available", className: "bg-white text-cyan-700 border-cyan-500" },
+                    { key: "reserved", label: "Reserved", className: "bg-rose-50 text-rose-600 border-rose-300" },
+                    { key: "yours", label: "Your spot", className: "bg-violet-50 text-violet-700 border-violet-500" },
+                    { key: "restricted", label: "Restricted", className: "bg-slate-100 text-slate-500 border-slate-300" },
+                  ].map((item) => (
+                    <span key={item.key} className={cn("rounded-full border px-3 py-2", item.className)}>
+                      {item.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[2rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+              <Sparkles className="h-5 w-5 text-sky-700" />
+              Desk focus
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {selectedDesk ? (
+              <>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.98))] p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold text-slate-950">{selectedDesk.label ?? "Desk"}</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Status: <span className="font-medium capitalize text-slate-700">{selectedDesk.status}</span>
+                      </p>
+                    </div>
+                    <Badge
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.18em]",
+                        statusClasses(selectedDesk.status),
+                      )}
+                    >
+                      {selectedDesk.status}
+                    </Badge>
+                  </div>
+                  {selectedDesk.occupantLabel ? (
+                    <p className="mt-2 text-sm text-slate-600">Occupied by {selectedDesk.occupantLabel}</p>
+                  ) : null}
+                </div>
+
+                <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Amenities</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedDesk.amenities.length ? (
+                      selectedDesk.amenities.map((amenity) => (
+                        <Badge key={amenity} variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1">
+                          {amenity}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-slate-500">No amenities tagged yet.</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Booking notes</p>
+                  <Textarea
+                    value={reservationNotes}
+                    onChange={(event) => setReservationNotes(event.target.value)}
+                    placeholder="Optional context for this booking"
+                    className="mt-3 min-h-[110px] rounded-2xl border-slate-200"
+                  />
+                </div>
+
+                {selectedDesk.status === "available" ? (
+                  <Button
+                    type="button"
+                    className="h-11 w-full rounded-xl bg-slate-950 text-white shadow-[0_16px_40px_-28px_rgba(15,23,42,0.85)] hover:bg-slate-800"
+                    disabled={reserveMutation.isPending || Boolean(currentReservation && currentReservation.deskId !== selectedDesk.id)}
+                    onClick={() => void reserveMutation.mutate(selectedDesk)}
+                  >
+                    {reserveMutation.isPending ? "Booking..." : "Book this desk"}
+                  </Button>
+                ) : null}
+
+                {selectedDesk.status === "yours" && selectedDesk.reservationId ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 w-full rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                    disabled={cancelMutation.isPending}
+                    onClick={() => void cancelMutation.mutate(selectedDesk.reservationId!)}
+                  >
+                    {cancelMutation.isPending ? "Cancelling..." : "Cancel reservation"}
+                  </Button>
+                ) : null}
+
+                {currentReservation && currentReservation.deskId !== selectedDesk.id ? (
+                  <div className="rounded-[1.4rem] border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    You already have a booking for this room and segment. Cancel it first if you want to switch desk.
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-500">
+                Select a desk from the live map to review its details, amenities and booking options.
+              </div>
+            )}
+
+            {currentReservation ? (
+              <div className="rounded-[1.4rem] border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
+                <p className="font-medium">
+                  Current booking: {currentReservation.roomName} / {currentReservation.deskLabel ?? "Desk"}
+                </p>
+                <p className="mt-2">
+                  Segment: {currentReservation.segment} on {formatDateLabel(currentReservation.dateStart)}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              <p className="font-medium text-slate-950">Access</p>
+              <p className="mt-2">
+                Availability reflects organization membership, direct room access and sharing groups automatically.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
