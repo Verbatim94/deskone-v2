@@ -1,5 +1,7 @@
 name: Supabase Deploy
 
+# Trigger note: keep this workflow versioned with Supabase schema and function changes.
+
 on:
   push:
     branches:
