@@ -3,6 +3,7 @@ const PBKDF2_ITERATIONS = 310_000;
 const SALT_LENGTH = 16;
 const HASH_LENGTH = 32;
 const MIN_PASSWORD_LENGTH = 12;
+const TEMP_PASSWORD_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
 
 function textEncoder() {
   return new TextEncoder();
@@ -67,6 +68,17 @@ export function validatePasswordPolicy(password: string) {
   }
 
   return null;
+}
+
+export function createTemporaryPassword() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  let output = "Deskone!";
+
+  for (const byte of bytes) {
+    output += TEMP_PASSWORD_ALPHABET[byte % TEMP_PASSWORD_ALPHABET.length];
+  }
+
+  return output.slice(0, 20);
 }
 
 export async function createPasswordHash(password: string) {

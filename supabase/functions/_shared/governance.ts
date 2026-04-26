@@ -16,6 +16,7 @@ export type GovernanceUserBase = {
   role: "super_admin" | "admin" | "user";
   is_active: boolean;
   login_enabled: boolean;
+  must_change_password: boolean;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
@@ -441,6 +442,7 @@ export async function hydrateGovernanceUsers(
       fullName: user.full_name,
       isActive: user.is_active,
       loginEnabled: user.login_enabled,
+      mustChangePassword: user.must_change_password,
       lastLoginAt: user.last_login_at,
       createdAt: user.created_at,
       updatedAt: user.updated_at,

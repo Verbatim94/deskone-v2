@@ -1,6 +1,6 @@
 import { invokeEdgeFunction } from "@/lib/api-client";
 import { clearActiveOrganizationId, clearSessionToken, persistSessionToken, readSessionToken } from "@/features/auth/session-store";
-import type { LoginInput, LoginResponse, SessionResponse } from "@/features/auth/types";
+import type { ChangePasswordInput, LoginInput, LoginResponse, SessionResponse } from "@/features/auth/types";
 
 export async function login(input: LoginInput) {
   const response = await invokeEdgeFunction<LoginResponse>("auth-login", {
@@ -64,4 +64,18 @@ export async function revokeAllSessions() {
     clearActiveOrganizationId();
     clearSessionToken();
   }
+}
+
+export async function changePassword(input: ChangePasswordInput) {
+  const sessionToken = readSessionToken();
+
+  if (!sessionToken) {
+    throw new Error("Missing session token.");
+  }
+
+  await invokeEdgeFunction<{ ok: true }>("auth-change-password", {
+    method: "POST",
+    sessionToken,
+    body: input,
+  });
 }

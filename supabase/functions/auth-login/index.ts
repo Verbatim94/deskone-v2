@@ -30,7 +30,7 @@ Deno.serve((req) =>
 
     const { data: user, error } = await supabase
       .from("app_users")
-      .select("id, username, full_name, role, password_hash, is_active, login_enabled, session_version")
+      .select("id, username, full_name, role, password_hash, is_active, login_enabled, must_change_password, session_version")
       .eq("username", username)
       .single();
 
@@ -105,6 +105,7 @@ Deno.serve((req) =>
         username: user.username as string,
         fullName: user.full_name as string,
         role: user.role as "super_admin" | "admin" | "user",
+        mustChangePassword: user.must_change_password as boolean,
       },
     });
 

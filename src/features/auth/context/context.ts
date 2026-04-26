@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import type { LoginInput, OrganizationSummary, SessionResponse, SessionUser } from "@/features/auth/types";
+import type { ChangePasswordInput, LoginInput, OrganizationSummary, SessionResponse, SessionUser } from "@/features/auth/types";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -15,6 +15,7 @@ export type AuthContextValue = {
   login: (input: LoginInput) => Promise<SessionResponse>;
   logout: () => Promise<void>;
   revokeAllSessions: () => Promise<void>;
+  changePassword: (input: ChangePasswordInput) => Promise<SessionResponse | null>;
   refreshSession: () => Promise<SessionResponse | null>;
   setActiveOrganizationId: (organizationId: string) => void;
 };

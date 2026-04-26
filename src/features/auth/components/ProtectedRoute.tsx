@@ -7,6 +7,7 @@ import type { AppRole } from "@/features/auth/types";
 
 type ProtectedRouteProps = PropsWithChildren<{
   requiredRole?: AppRole;
+  allowPasswordSetup?: boolean;
 }>;
 
 const roleRank: Record<AppRole, number> = {
@@ -15,9 +16,9 @@ const roleRank: Record<AppRole, number> = {
   super_admin: 2,
 };
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole, allowPasswordSetup = false }: ProtectedRouteProps) {
   const location = useLocation();
-  const { status, user } = useAuth();
+  const { status, user, session } = useAuth();
 
   if (status === "loading") {
     return (
@@ -33,6 +34,10 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
 
   if (status !== "authenticated" || !user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (session?.user.mustChangePassword && !allowPasswordSetup) {
+    return <Navigate to="/set-password" replace />;
   }
 
   if (requiredRole && roleRank[user.role] < roleRank[requiredRole]) {

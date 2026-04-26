@@ -1,10 +1,11 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, LoaderCircle, ShieldPlus, UserCog, Users } from "lucide-react";
+import { Building2, Copy, KeyRound, LoaderCircle, ShieldPlus, UserCog, Users } from "lucide-react";
 
 import {
   createGovernanceOrganization,
   createGovernanceUser,
+  issueGovernanceUserAccess,
   listGovernanceOrganizations,
   listGovernanceUsers,
   updateGovernanceOrganization,
@@ -15,6 +16,7 @@ import type {
   GovernanceMembershipInput,
   GovernanceOrganization,
   GovernanceUser,
+  GovernanceIssuedCredentials,
   UpdateOrganizationInput,
 } from "@/features/governance/types";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,7 @@ type UserFormState = {
   password: string;
   role: "admin" | "user";
   isActive: boolean;
+  loginEnabled: boolean;
   firstName: string;
   lastName: string;
   displayName: string;
@@ -71,11 +74,18 @@ type OrganizationUserSelection = Record<
   }
 >;
 
+type IssuedAccessState = {
+  userId: string;
+  username: string;
+  credentials: GovernanceIssuedCredentials;
+};
+
 const defaultCreateUserForm: UserFormState = {
   username: "",
   password: "",
   role: "user",
   isActive: true,
+  loginEnabled: false,
   firstName: "",
   lastName: "",
   displayName: "",
@@ -232,6 +242,7 @@ function createFormStateFromUser(user: GovernanceUser): UserFormState {
     password: "",
     role: user.role === "super_admin" ? "admin" : user.role,
     isActive: user.isActive,
+    loginEnabled: user.loginEnabled,
     firstName: user.profile.firstName ?? "",
     lastName: user.profile.lastName ?? "",
     displayName: user.profile.displayName ?? "",
@@ -262,7 +273,11 @@ function formatDateTime(value: string | null) {
 }
 
 function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof EdgeClientError ? error.message : fallback;
+  if (error instanceof EdgeClientError || error instanceof Error) {
+    return error.message;
+  }
+
+  return fallback;
 }
 
 function UserMembershipEditor({
@@ -434,6 +449,7 @@ export default function SuperAdminConsolePage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [editUserForm, setEditUserForm] = useState<UserFormState>(defaultEditUserForm);
   const [editMembershipSelection, setEditMembershipSelection] = useState<MembershipSelection>({});
+  const [issuedAccessState, setIssuedAccessState] = useState<IssuedAccessState | null>(null);
 
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
@@ -547,6 +563,16 @@ export default function SuperAdminConsolePage() {
     setEditMembershipSelection(buildMembershipSelection(organizations, selectedUser.memberships));
   }, [organizations, selectedUser]);
 
+  useEffect(() => {
+    if (!issuedAccessState) {
+      return;
+    }
+
+    if (issuedAccessState.userId !== selectedUserId) {
+      setIssuedAccessState(null);
+    }
+  }, [issuedAccessState, selectedUserId]);
+
   const createOrganizationMutation = useMutation({
     mutationFn: () =>
       createGovernanceOrganization({
@@ -601,10 +627,15 @@ export default function SuperAdminConsolePage() {
 
   const createUserMutation = useMutation({
     mutationFn: async () => {
+      if (createUserForm.loginEnabled && !createUserForm.password.trim()) {
+        throw new Error("Set a password or create the profile with login disabled, then use Issue access later.");
+      }
+
       const payload: CreateUserInput = {
         username: createUserForm.username,
         password: createUserForm.password,
         role: createUserForm.role,
+        loginEnabled: createUserForm.loginEnabled,
         firstName: createUserForm.firstName || null,
         lastName: createUserForm.lastName || null,
         displayName: createUserForm.displayName || null,
@@ -641,12 +672,22 @@ export default function SuperAdminConsolePage() {
         throw new Error("Select a user first.");
       }
 
+      if (
+        selectedUser.role !== "super_admin" &&
+        !selectedUser.loginEnabled &&
+        editUserForm.loginEnabled &&
+        !editUserForm.password.trim()
+      ) {
+        throw new Error("Use Issue access to generate a temporary password, or set a password before enabling login.");
+      }
+
       return updateGovernanceUser({
         userId: selectedUser.id,
         username: editUserForm.username,
         password: editUserForm.password || undefined,
         role: selectedUser.role === "super_admin" ? undefined : editUserForm.role,
         isActive: selectedUser.role === "super_admin" ? true : editUserForm.isActive,
+        loginEnabled: selectedUser.role === "super_admin" ? true : editUserForm.loginEnabled,
         firstName: editUserForm.firstName || null,
         lastName: editUserForm.lastName || null,
         displayName: editUserForm.displayName || null,
@@ -670,6 +711,35 @@ export default function SuperAdminConsolePage() {
     },
     onError: (error) => {
       toast.error(getErrorMessage(error, "Unable to update the user."));
+    },
+  });
+
+  const issueAccessMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedUser) {
+        throw new Error("Select a user first.");
+      }
+
+      return issueGovernanceUserAccess(selectedUser.id);
+    },
+    onSuccess: ({ user, issuedCredentials }) => {
+      if (!issuedCredentials || !selectedUser) {
+        toast.error("No temporary password was issued.");
+        return;
+      }
+
+      setIssuedAccessState({
+        userId: user.id,
+        username: user.username,
+        credentials: issuedCredentials,
+      });
+      setEditUserForm(createFormStateFromUser(user));
+      toast.success(`Temporary access issued for ${user.username}.`);
+      void queryClient.invalidateQueries({ queryKey: ["governance-users"] });
+      void queryClient.invalidateQueries({ queryKey: ["governance-users", "all"] });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Unable to issue temporary access."));
     },
   });
 
@@ -1025,7 +1095,7 @@ export default function SuperAdminConsolePage() {
                         onChange={(event) =>
                           setCreateUserForm((currentForm) => ({ ...currentForm, password: event.target.value }))
                         }
-                        placeholder="At least 12 chars"
+                        placeholder="Optional unless login is enabled now"
                         className="rounded-xl border-slate-200"
                       />
                     </div>
@@ -1066,6 +1136,22 @@ export default function SuperAdminConsolePage() {
                         className="rounded-xl border-slate-200"
                       />
                     </div>
+                  </div>
+
+                  <div className="flex h-11 items-center justify-between rounded-xl border border-slate-200 bg-white px-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">Login enabled</p>
+                      <p className="text-xs text-slate-500">Turn this off to create a profile without immediate access.</p>
+                    </div>
+                    <Switch
+                      checked={createUserForm.loginEnabled}
+                      onCheckedChange={(checked) =>
+                        setCreateUserForm((currentForm) => ({
+                          ...currentForm,
+                          loginEnabled: checked,
+                        }))
+                      }
+                    />
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-3">
@@ -1361,8 +1447,50 @@ export default function SuperAdminConsolePage() {
                                 >
                                   {selectedUser.isActive ? "active" : "inactive"}
                                 </Badge>
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600"
+                                >
+                                  {selectedUser.loginEnabled ? "login enabled" : "login disabled"}
+                                </Badge>
+                                {selectedUser.mustChangePassword ? (
+                                  <Badge className="rounded-full bg-amber-100 px-3 py-1 text-amber-800 hover:bg-amber-100">
+                                    password setup required
+                                  </Badge>
+                                ) : null}
                               </div>
                             </div>
+
+                            {issuedAccessState && issuedAccessState.userId === selectedUser.id ? (
+                              <div className="rounded-[1.35rem] border border-amber-200 bg-amber-50/80 p-4">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-amber-950">Temporary password issued</p>
+                                    <p className="mt-1 text-sm text-amber-800">
+                                      Share this password securely with {issuedAccessState.username}. The user will be
+                                      forced to change it on first login.
+                                    </p>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-xl border-amber-200 bg-white text-amber-900 hover:bg-amber-100"
+                                    onClick={async () => {
+                                      await navigator.clipboard.writeText(
+                                        issuedAccessState.credentials.temporaryPassword,
+                                      );
+                                      toast.success("Temporary password copied.");
+                                    }}
+                                  >
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Copy password
+                                  </Button>
+                                </div>
+                                <div className="mt-3 rounded-xl border border-amber-200 bg-white px-4 py-3 font-mono text-sm text-slate-900">
+                                  {issuedAccessState.credentials.temporaryPassword}
+                                </div>
+                              </div>
+                            ) : null}
 
                             <div className="grid gap-4 md:grid-cols-2">
                               <div className="grid gap-2">
@@ -1444,6 +1572,42 @@ export default function SuperAdminConsolePage() {
                                   />
                                 </div>
                               </div>
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-[1fr_auto]">
+                              <div className="flex h-14 items-center justify-between rounded-xl border border-slate-200 bg-white px-4">
+                                <div>
+                                  <p className="text-sm font-medium text-slate-700">Login enabled</p>
+                                  <p className="text-xs text-slate-500">
+                                    Disable access without removing the profile or memberships.
+                                  </p>
+                                </div>
+                                <Switch
+                                  checked={selectedUser.role === "super_admin" ? true : editUserForm.loginEnabled}
+                                  disabled={selectedUser.role === "super_admin"}
+                                  onCheckedChange={(checked) =>
+                                    setEditUserForm((currentForm) => ({
+                                      ...currentForm,
+                                      loginEnabled: checked,
+                                    }))
+                                  }
+                                />
+                              </div>
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-14 rounded-xl border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                                disabled={selectedUser.role === "super_admin" || issueAccessMutation.isPending}
+                                onClick={() => issueAccessMutation.mutate()}
+                              >
+                                <KeyRound className="mr-2 h-4 w-4" />
+                                {issueAccessMutation.isPending
+                                  ? "Issuing..."
+                                  : selectedUser.loginEnabled
+                                    ? "Reset access"
+                                    : "Issue access"}
+                              </Button>
                             </div>
 
                             <div className="grid gap-4 md:grid-cols-3">

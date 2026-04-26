@@ -3,6 +3,7 @@ import { requireSessionToken } from "@/features/auth/require-session-token";
 import type {
   CreateOrganizationInput,
   CreateUserInput,
+  GovernanceIssuedCredentials,
   GovernanceOrganization,
   GovernanceUser,
   UpdateOrganizationInput,
@@ -74,4 +75,20 @@ export async function updateGovernanceUser(input: UpdateUserInput) {
   });
 
   return response.user;
+}
+
+export async function issueGovernanceUserAccess(userId: string) {
+  const response = await invokeEdgeFunction<{
+    user: GovernanceUser;
+    issuedCredentials: GovernanceIssuedCredentials | null;
+  }>("governance-users", {
+    method: "PATCH",
+    sessionToken: requireSessionToken(),
+    body: {
+      userId,
+      issueTemporaryPassword: true,
+    },
+  });
+
+  return response;
 }

@@ -13,6 +13,7 @@ const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
 const RoomsPage = lazy(() => import("@/pages/RoomsPage"));
 const SuperAdminConsolePage = lazy(() => import("@/pages/SuperAdminConsolePage"));
+const SetPasswordPage = lazy(() => import("@/pages/SetPasswordPage"));
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
 
 function RouteFallback() {
@@ -34,6 +35,14 @@ export function AppRouter() {
               <PublicOnlyRoute>
                 <LoginPage />
               </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/set-password"
+            element={
+              <ProtectedRoute allowPasswordSetup>
+                <SetPasswordPage />
+              </ProtectedRoute>
             }
           />
           <Route

@@ -58,12 +58,18 @@ export type GovernanceUser = {
   fullName: string;
   isActive: boolean;
   loginEnabled: boolean;
+  mustChangePassword: boolean;
   lastLoginAt: string | null;
   createdAt: string;
   updatedAt: string;
   profile: GovernanceUserProfile;
   memberships: GovernanceUserMembership[];
   identities: GovernanceUserIdentity[];
+};
+
+export type GovernanceIssuedCredentials = {
+  temporaryPassword: string;
+  mustChangePassword: boolean;
 };
 
 export type GovernanceMembershipInput = {
@@ -113,6 +119,7 @@ export type UpdateUserInput = {
   userId: string;
   username?: string;
   password?: string;
+  issueTemporaryPassword?: boolean;
   role?: Exclude<AppRole, "super_admin">;
   isActive?: boolean;
   loginEnabled?: boolean;

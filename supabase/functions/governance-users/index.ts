@@ -11,7 +11,7 @@ import {
   validateUserRoleMemberships,
 } from "../_shared/governance.ts";
 import { withJsonHandler, HttpError, jsonResponse } from "../_shared/http.ts";
-import { createPasswordHash, validatePasswordPolicy } from "../_shared/password.ts";
+import { createPasswordHash, createTemporaryPassword, validatePasswordPolicy } from "../_shared/password.ts";
 import { createAdminClient } from "../_shared/supabase-admin.ts";
 import { getClientIp, getUserAgent, requireActiveSession } from "../_shared/sessions.ts";
 
@@ -19,6 +19,7 @@ type GovernanceUserBody = {
   userId?: string;
   username?: string;
   password?: string;
+  issueTemporaryPassword?: boolean;
   role?: "admin" | "user";
   isActive?: boolean;
   loginEnabled?: boolean;
@@ -180,7 +181,7 @@ Deno.serve((req) =>
 
       let query = supabase
         .from("app_users")
-        .select("id, username, full_name, role, is_active, login_enabled, last_login_at, created_at, updated_at")
+        .select("id, username, full_name, role, is_active, login_enabled, must_change_password, last_login_at, created_at, updated_at")
         .order("created_at", { ascending: false })
         .limit(200);
 
@@ -215,6 +216,7 @@ Deno.serve((req) =>
           role: user.role as "super_admin" | "admin" | "user",
           is_active: user.is_active as boolean,
           login_enabled: user.login_enabled as boolean,
+          must_change_password: user.must_change_password as boolean,
           last_login_at: (user.last_login_at as string | null | undefined) ?? null,
           created_at: user.created_at as string,
           updated_at: user.updated_at as string,
@@ -253,8 +255,9 @@ Deno.serve((req) =>
           role,
           is_active: true,
           login_enabled: loginEnabled,
+          must_change_password: false,
         })
-        .select("id, username, full_name, role, is_active, login_enabled, last_login_at, created_at, updated_at")
+        .select("id, username, full_name, role, is_active, login_enabled, must_change_password, last_login_at, created_at, updated_at")
         .single();
 
       if (createdUserError || !createdUser) {
@@ -318,6 +321,7 @@ Deno.serve((req) =>
           role: createdUser.role as "super_admin" | "admin" | "user",
           is_active: createdUser.is_active as boolean,
           login_enabled: createdUser.login_enabled as boolean,
+          must_change_password: createdUser.must_change_password as boolean,
           last_login_at: (createdUser.last_login_at as string | null | undefined) ?? null,
           created_at: createdUser.created_at as string,
           updated_at: createdUser.updated_at as string,
@@ -336,7 +340,7 @@ Deno.serve((req) =>
 
       const { data: existingUser, error: existingUserError } = await supabase
         .from("app_users")
-        .select("id, username, full_name, role, is_active, login_enabled, last_login_at, created_at, updated_at")
+        .select("id, username, full_name, role, is_active, login_enabled, must_change_password, session_version, last_login_at, created_at, updated_at")
         .eq("id", userId)
         .maybeSingle();
 
@@ -363,6 +367,10 @@ Deno.serve((req) =>
 
         if (body.loginEnabled === false) {
           throw new HttpError(400, "bad_request", "The bootstrap super-admin login cannot be disabled from this endpoint.");
+        }
+
+        if (body.issueTemporaryPassword === true) {
+          throw new HttpError(400, "bad_request", "The bootstrap super-admin password cannot be rotated from this endpoint.");
         }
       }
 
@@ -407,6 +415,7 @@ Deno.serve((req) =>
           ? "super_admin"
           : normalizeMutableRole(body.role) ?? (existingUser.role as "admin" | "user");
       const nextLoginEnabled = normalizeOptionalBoolean(body.loginEnabled, "loginEnabled");
+      const issueTemporaryPassword = normalizeOptionalBoolean(body.issueTemporaryPassword, "issueTemporaryPassword") ?? false;
       const hasMembershipUpdate = body.memberships !== undefined;
       const memberships = hasMembershipUpdate ? normalizeMemberships(body.memberships) : [];
 
@@ -424,7 +433,12 @@ Deno.serve((req) =>
       }
 
       const username = body.username ? normalizeUsername(body.username) : (existingUser.username as string);
-      const password = body.password ?? "";
+      if (issueTemporaryPassword && body.password) {
+        throw new HttpError(400, "bad_request", "Provide either password or issueTemporaryPassword, not both.");
+      }
+
+      const generatedTemporaryPassword = issueTemporaryPassword ? createTemporaryPassword() : null;
+      const password = generatedTemporaryPassword ?? body.password ?? "";
 
       if (password) {
         const passwordPolicyError = validatePasswordPolicy(password);
@@ -450,13 +464,20 @@ Deno.serve((req) =>
 
       if (password) {
         updatePayload.password_hash = await createPasswordHash(password);
+        updatePayload.must_change_password = issueTemporaryPassword;
+      }
+
+      if (issueTemporaryPassword) {
+        updatePayload.login_enabled = true;
+        updatePayload.is_active = true;
+        updatePayload.session_version = Number(existingUser.session_version) + 1;
       }
 
       const { data: updatedUser, error: updatedUserError } = await supabase
         .from("app_users")
         .update(updatePayload)
         .eq("id", userId)
-        .select("id, username, full_name, role, is_active, login_enabled, last_login_at, created_at, updated_at")
+        .select("id, username, full_name, role, is_active, login_enabled, must_change_password, last_login_at, created_at, updated_at")
         .single();
 
       if (updatedUserError || !updatedUser) {
@@ -512,6 +533,7 @@ Deno.serve((req) =>
           loginEnabled: nextLoginEnabled,
           membershipCount: hasMembershipUpdate ? memberships.length : undefined,
           passwordUpdated: Boolean(password),
+          temporaryPasswordIssued: issueTemporaryPassword,
         },
       });
 
@@ -523,13 +545,22 @@ Deno.serve((req) =>
           role: updatedUser.role as "super_admin" | "admin" | "user",
           is_active: updatedUser.is_active as boolean,
           login_enabled: updatedUser.login_enabled as boolean,
+          must_change_password: updatedUser.must_change_password as boolean,
           last_login_at: (updatedUser.last_login_at as string | null | undefined) ?? null,
           created_at: updatedUser.created_at as string,
           updated_at: updatedUser.updated_at as string,
         },
       ]);
 
-      return jsonResponse(req, { user: hydratedUser });
+      return jsonResponse(req, {
+        user: hydratedUser,
+        issuedCredentials: generatedTemporaryPassword
+          ? {
+              temporaryPassword: generatedTemporaryPassword,
+              mustChangePassword: true,
+            }
+          : null,
+      });
     }
 
     throw new HttpError(405, "bad_request", "Unsupported method.");

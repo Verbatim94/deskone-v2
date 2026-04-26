@@ -57,6 +57,7 @@ export type ActiveSession = {
     username: string;
     fullName: string;
     role: SessionUserRole;
+    mustChangePassword: boolean;
   };
 };
 
@@ -85,6 +86,7 @@ export async function requireActiveSession(req: Request, supabase: SupabaseAdmin
           full_name,
           role,
           is_active,
+          must_change_password,
           session_version
         )
       `,
@@ -113,6 +115,7 @@ export async function requireActiveSession(req: Request, supabase: SupabaseAdmin
       username: data.app_users.username as string,
       fullName: data.app_users.full_name as string,
       role: data.app_users.role as SessionUserRole,
+      mustChangePassword: data.app_users.must_change_password as boolean,
     },
   };
 }

@@ -40,6 +40,7 @@ export async function buildSessionView(supabase: SupabaseAdminClient, session: A
       fullName: session.user.fullName,
       displayName,
       email: (profile?.email as string | null | undefined) ?? null,
+      mustChangePassword: session.user.mustChangePassword,
       primaryIdentityProvider,
       identities,
     },

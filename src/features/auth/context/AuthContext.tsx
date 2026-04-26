@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import {
+  changePassword as changePasswordRequest,
   getActiveSession,
   login as loginRequest,
   logout as logoutRequest,
@@ -18,7 +19,7 @@ import {
   persistActiveOrganizationId,
   readActiveOrganizationId,
 } from "@/features/auth/session-store";
-import type { LoginInput, SessionResponse } from "@/features/auth/types";
+import type { ChangePasswordInput, LoginInput, SessionResponse } from "@/features/auth/types";
 import { AuthContext, type AuthContextValue, type AuthStatus } from "@/features/auth/context/context";
 
 function resolveActiveOrganizationId(session: SessionResponse | null, currentOrganizationId: string | null) {
@@ -108,6 +109,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     clearActiveOrganizationId();
   }, []);
 
+  const changePassword = useCallback(async (input: ChangePasswordInput) => {
+    await changePasswordRequest(input);
+    return refreshSession();
+  }, [refreshSession]);
+
   const setActiveOrganizationId = useCallback(
     (organizationId: string) => {
       if (!session?.organizations.some((organization) => organization.id === organizationId)) {
@@ -168,6 +174,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       login,
       logout,
       revokeAllSessions,
+      changePassword,
       refreshSession,
       setActiveOrganizationId,
     }),
@@ -178,6 +185,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       logout,
       refreshSession,
       revokeAllSessions,
+      changePassword,
       session,
       setActiveOrganizationId,
       status,

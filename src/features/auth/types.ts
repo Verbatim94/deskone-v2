@@ -36,6 +36,7 @@ export type SessionUser = {
   fullName: string;
   displayName: string;
   email: string | null;
+  mustChangePassword: boolean;
   primaryIdentityProvider: IdentityProviderKey;
   identities: SessionIdentity[];
 };
@@ -59,4 +60,9 @@ export type SessionResponse = {
   identityProviders: IdentityProviderDescriptor[];
   user: SessionUser;
   organizations: OrganizationSummary[];
+};
+
+export type ChangePasswordInput = {
+  currentPassword: string;
+  newPassword: string;
 };
