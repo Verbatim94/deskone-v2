@@ -2,6 +2,8 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   LoaderCircle,
   MapPinned,
   Search,
@@ -50,6 +52,15 @@ function formatSegmentLabel(segment: RoomBookingSegment) {
   return segment === "full" ? "Full day" : segment === "am" ? "Morning" : "Afternoon";
 }
 
+function shiftIsoDate(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof EdgeClientError ? error.message : fallback;
 }
@@ -66,6 +77,21 @@ function statusClasses(status: RoomDeskStatus) {
       return "border-slate-300 bg-slate-100 text-slate-400";
     default:
       return "border-slate-300 bg-white text-slate-500";
+  }
+}
+
+function describeDeskStatus(status: RoomDeskStatus) {
+  switch (status) {
+    case "available":
+      return "Available now";
+    case "yours":
+      return "Reserved by you";
+    case "reserved":
+      return "Held by another teammate";
+    case "restricted":
+      return "Restricted desk";
+    default:
+      return "Unavailable";
   }
 }
 
@@ -96,6 +122,33 @@ function SegmentButton({
   );
 }
 
+function DeskFilterButton({
+  label,
+  value,
+  activeValue,
+  onClick,
+}: {
+  label: string;
+  value: "all" | "available" | "reserved" | "yours";
+  activeValue: "all" | "available" | "reserved" | "yours";
+  onClick: (value: "all" | "available" | "reserved" | "yours") => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(value)}
+      className={cn(
+        "rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+        activeValue === value
+          ? "border-sky-200 bg-sky-50 text-sky-800"
+          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function RoomsPage() {
   const queryClient = useQueryClient();
   const { activeOrganization, activeOrganizationId, user } = useAuth();
@@ -105,7 +158,10 @@ export default function RoomsPage() {
   const [selectedDate, setSelectedDate] = useState(getTodayIsoDate);
   const [selectedSegment, setSelectedSegment] = useState<RoomBookingSegment>("full");
   const [reservationNotes, setReservationNotes] = useState("");
+  const [deskSearch, setDeskSearch] = useState("");
+  const [deskFilter, setDeskFilter] = useState<"all" | "available" | "reserved" | "yours">("all");
   const deferredRoomSearch = useDeferredValue(roomSearch);
+  const deferredDeskSearch = useDeferredValue(deskSearch);
 
   const roomsQuery = useQuery({
     queryKey: ["rooms-overview", activeOrganizationId],
@@ -161,6 +217,17 @@ export default function RoomsPage() {
     [availabilityQuery.data?.desks, selectedDeskId],
   );
 
+  useEffect(() => {
+    const desks = availabilityQuery.data?.desks ?? [];
+    if (!desks.length) {
+      return;
+    }
+
+    if (!selectedDeskId || !desks.some((desk) => desk.id === selectedDeskId)) {
+      setSelectedDeskId(desks[0].id);
+    }
+  }, [availabilityQuery.data?.desks, selectedDeskId]);
+
   const reserveMutation = useMutation({
     mutationFn: async (desk: RoomDesk) =>
       createRoomReservation({
@@ -207,6 +274,35 @@ export default function RoomsPage() {
     ? `${rooms.filter((room) => room.accessRole === "admin").length} admin-controlled`
     : "No rooms yet";
   const statusSummary = availabilityQuery.data?.summary;
+  const visibleDesks = useMemo(() => {
+    const normalizedSearch = deferredDeskSearch.trim().toLowerCase();
+    const selectedRoomDesks = availabilityQuery.data?.desks ?? [];
+
+    return selectedRoomDesks
+      .filter((desk) => {
+        const matchesSearch = !normalizedSearch
+          || `${desk.label ?? ""} ${desk.occupantLabel ?? ""} ${desk.amenities.join(" ")}`
+            .toLowerCase()
+            .includes(normalizedSearch);
+
+        if (!matchesSearch) {
+          return false;
+        }
+
+        if (deskFilter === "all") {
+          return true;
+        }
+
+        return desk.status === deskFilter;
+      })
+      .sort((left, right) => {
+        const leftLabel = left.label ?? left.id;
+        const rightLabel = right.label ?? right.id;
+        return leftLabel.localeCompare(rightLabel, "en", { numeric: true, sensitivity: "base" });
+      });
+  }, [availabilityQuery.data?.desks, deferredDeskSearch, deskFilter]);
+  const visibleDeskCount = visibleDesks.length;
+  const todayIsoDate = getTodayIsoDate();
 
   return (
     <div className="space-y-6">
@@ -234,12 +330,40 @@ export default function RoomsPage() {
               <SegmentButton segment="full" activeSegment={selectedSegment} onClick={setSelectedSegment} />
               <SegmentButton segment="am" activeSegment={selectedSegment} onClick={setSelectedSegment} />
               <SegmentButton segment="pm" activeSegment={selectedSegment} onClick={setSelectedSegment} />
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-                className="h-11 w-[220px] rounded-full border-slate-200 bg-white/95 px-4"
-              />
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 p-1 shadow-sm">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setSelectedDate((current) => shiftIsoDate(current, -1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(event) => setSelectedDate(event.target.value)}
+                  className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setSelectedDate((current) => shiftIsoDate(current, 1))}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 rounded-full border-slate-200 bg-white/95 px-4 text-slate-700 hover:bg-slate-50"
+                onClick={() => setSelectedDate(todayIsoDate)}
+              >
+                Today
+              </Button>
             </div>
 
             <div className="mt-7 grid gap-3 sm:grid-cols-3">
@@ -421,6 +545,9 @@ export default function RoomsPage() {
                 <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
                   {segmentLabel}
                 </Badge>
+                <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                  {formatDateLabel(selectedDate)}
+                </Badge>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-4">
@@ -530,7 +657,7 @@ export default function RoomsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
               <Sparkles className="h-5 w-5 text-sky-700" />
-              Desk focus
+              Desk console
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -541,7 +668,7 @@ export default function RoomsPage() {
                     <div>
                       <p className="text-lg font-semibold text-slate-950">{selectedDesk.label ?? "Desk"}</p>
                       <p className="mt-1 text-sm text-slate-500">
-                        Status: <span className="font-medium capitalize text-slate-700">{selectedDesk.status}</span>
+                        Status: <span className="font-medium capitalize text-slate-700">{describeDeskStatus(selectedDesk.status)}</span>
                       </p>
                     </div>
                     <Badge
@@ -634,6 +761,141 @@ export default function RoomsPage() {
               <p className="mt-2">
                 Availability reflects organization membership, direct room access and sharing groups automatically.
               </p>
+            </div>
+
+            <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Desk directory</p>
+                  <p className="mt-1 text-sm font-medium text-slate-950">{visibleDeskCount} desks in view</p>
+                </div>
+                <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                  {selectedRoom?.name ?? "No room"}
+                </Badge>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    value={deskSearch}
+                    onChange={(event) => setDeskSearch(event.target.value)}
+                    placeholder="Search desk label, occupant or amenity..."
+                    className="h-10 rounded-xl border-slate-200 bg-slate-50 pl-10"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <DeskFilterButton label="All" value="all" activeValue={deskFilter} onClick={setDeskFilter} />
+                  <DeskFilterButton label="Available" value="available" activeValue={deskFilter} onClick={setDeskFilter} />
+                  <DeskFilterButton label="Reserved" value="reserved" activeValue={deskFilter} onClick={setDeskFilter} />
+                  <DeskFilterButton label="Mine" value="yours" activeValue={deskFilter} onClick={setDeskFilter} />
+                </div>
+              </div>
+
+              <ScrollArea className="mt-4 h-[320px] rounded-[1.1rem] border border-slate-200 bg-slate-50/70">
+                <div className="grid gap-2 p-3">
+                  {!visibleDesks.length ? (
+                    <div className="rounded-[1rem] border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+                      No desks match the current filters.
+                    </div>
+                  ) : null}
+
+                  {visibleDesks.map((desk) => {
+                    const isSelected = desk.id === selectedDeskId;
+                    const canBookDesk = desk.status === "available";
+                    const canCancelDesk = desk.status === "yours" && Boolean(desk.reservationId);
+
+                    return (
+                      <button
+                        key={desk.id}
+                        type="button"
+                        onClick={() => setSelectedDeskId(desk.id)}
+                        className={cn(
+                          "rounded-[1.1rem] border p-3 text-left transition-all",
+                          isSelected
+                            ? "border-sky-200 bg-white shadow-sm"
+                            : "border-slate-200 bg-white hover:bg-slate-50",
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-950">{desk.label ?? "Desk"}</p>
+                            <p className="mt-1 text-xs text-slate-500">{describeDeskStatus(desk.status)}</p>
+                          </div>
+                          <Badge
+                            className={cn(
+                              "rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.16em]",
+                              statusClasses(desk.status),
+                            )}
+                          >
+                            {desk.status}
+                          </Badge>
+                        </div>
+
+                        {desk.occupantLabel ? (
+                          <p className="mt-2 truncate text-xs text-slate-500">Occupant: {desk.occupantLabel}</p>
+                        ) : null}
+
+                        {desk.amenities.length ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {desk.amenities.slice(0, 2).map((amenity) => (
+                              <Badge
+                                key={`${desk.id}-${amenity}`}
+                                variant="outline"
+                                className="rounded-full border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600"
+                              >
+                                {amenity}
+                              </Badge>
+                            ))}
+                            {desk.amenities.length > 2 ? (
+                              <Badge
+                                variant="outline"
+                                className="rounded-full border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-600"
+                              >
+                                +{desk.amenities.length - 2}
+                              </Badge>
+                            ) : null}
+                          </div>
+                        ) : null}
+
+                        <div className="mt-3 flex gap-2">
+                          {canBookDesk ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="h-8 rounded-full bg-slate-950 px-3 text-xs text-white hover:bg-slate-800"
+                              disabled={reserveMutation.isPending || Boolean(currentReservation && currentReservation.deskId !== desk.id)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setSelectedDeskId(desk.id);
+                                void reserveMutation.mutate(desk);
+                              }}
+                            >
+                              Book
+                            </Button>
+                          ) : null}
+
+                          {canCancelDesk ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 rounded-full border-rose-200 bg-rose-50 px-3 text-xs text-rose-700 hover:bg-rose-100"
+                              disabled={cancelMutation.isPending}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                void cancelMutation.mutate(desk.reservationId!);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             </div>
           </CardContent>
         </Card>
