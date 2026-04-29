@@ -305,8 +305,8 @@ export default function RoomsPage() {
   const todayIsoDate = getTodayIsoDate();
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2.6rem] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.86)_42%,rgba(224,242,254,0.7))] p-6 shadow-[0_32px_110px_-58px_rgba(15,23,42,0.52)] backdrop-blur sm:p-8">
+    <div className="mx-auto max-w-[1540px] space-y-8">
+      <section className="overflow-hidden rounded-[2.8rem] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.88)_42%,rgba(224,242,254,0.62))] p-7 shadow-[0_28px_90px_-54px_rgba(15,23,42,0.42)] backdrop-blur sm:p-9">
         <div className="grid gap-8 xl:grid-cols-[1.12fr,0.88fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -366,18 +366,18 @@ export default function RoomsPage() {
               </Button>
             </div>
 
-            <div className="mt-7 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[1.6rem] border border-white/80 bg-white/80 p-4 shadow-sm">
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Accessible rooms</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-950">{rooms.length}</p>
                 <p className="mt-1 text-sm text-slate-500">Visible in your current environment.</p>
               </div>
-              <div className="rounded-[1.6rem] border border-white/80 bg-white/80 p-4 shadow-sm">
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Desk capacity</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-950">{totalAccessibleDesks}</p>
                 <p className="mt-1 text-sm text-slate-500">Total desks across your accessible neighborhoods.</p>
               </div>
-              <div className="rounded-[1.6rem] border border-white/80 bg-white/80 p-4 shadow-sm">
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Access profile</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-950">{roomMixLabel}</p>
                 <p className="mt-1 text-sm text-slate-500">Direct admin control and shared room access combined.</p>
@@ -432,7 +432,7 @@ export default function RoomsPage() {
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[320px,1fr,340px]">
+      <div className="grid gap-6 xl:grid-cols-[310px,minmax(0,1fr),360px]">
         <Card className="rounded-[2rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-xl text-slate-950">

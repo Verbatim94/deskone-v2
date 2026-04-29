@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { getOfficesOverview } from "@/features/offices/api";
@@ -56,7 +55,7 @@ function MetricCard({
   helper: string;
 }) {
   return (
-    <Card className="rounded-[1.8rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+    <Card className="rounded-[1.9rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.58)]">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -119,16 +118,19 @@ export default function HomePage() {
   const reports = reportsQuery.data?.reports ?? [];
   const roomReservations = scheduleQuery.data?.roomReservations ?? [];
   const officeBookings = scheduleQuery.data?.officeBookings ?? [];
-  const activeOfficeBookings = offices.flatMap((office) => office.bookings).filter((booking) => booking.status === "active");
+  const activeOfficeBookings = offices
+    .flatMap((office) => office.bookings)
+    .filter((booking) => booking.status === "active");
   const openReports = reports.filter((report) => report.status === "open");
   const primaryProvider = session?.user.primaryIdentityProvider ?? "local";
   const nextDeskReservation = roomReservations[0] ?? null;
   const nextOfficeBooking = officeBookings[0] ?? null;
+  const totalTodayItems = roomReservations.length + officeBookings.length;
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.9)_48%,rgba(224,242,254,0.66))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
-        <div className="grid gap-6 xl:grid-cols-[1.18fr,0.82fr]">
+    <div className="mx-auto max-w-[1520px] space-y-8">
+      <section className="overflow-hidden rounded-[2.8rem] border border-white/65 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92)_46%,rgba(224,242,254,0.62))] p-7 shadow-[0_28px_90px_-50px_rgba(15,23,42,0.42)] backdrop-blur sm:p-9">
+        <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="rounded-full bg-sky-100 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-100">
@@ -151,65 +153,131 @@ export default function HomePage() {
                 : "As soon as an organization is active, the workspace modules will become available here."}
             </p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild className="rounded-full bg-slate-950 px-5 text-white hover:bg-slate-800">
-                <Link to="/rooms">
-                  Open rooms
-                  <ArrowRight className="ml-2 h-4 w-4" />
+            <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:max-w-[760px] xl:grid-cols-4">
+              {[
+                {
+                  to: "/rooms",
+                  label: "Rooms",
+                  helper: "Open the flagship booking surface.",
+                  emphasis: true,
+                },
+                {
+                  to: "/offices",
+                  label: "Offices",
+                  helper: "Handle private office access and release windows.",
+                },
+                {
+                  to: "/reports",
+                  label: "Support",
+                  helper: "Review or submit operational comments.",
+                },
+                {
+                  to: "/my-bookings",
+                  label: "My bookings",
+                  helper: "Keep desks and offices in one timeline.",
+                },
+              ].map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={
+                    item.emphasis
+                      ? "rounded-[1.6rem] border border-slate-950/10 bg-slate-950 p-4 text-white shadow-[0_22px_50px_-35px_rgba(15,23,42,0.85)] transition-transform hover:-translate-y-0.5"
+                      : "rounded-[1.6rem] border border-white/80 bg-white/88 p-4 text-slate-900 shadow-sm transition-transform hover:-translate-y-0.5"
+                  }
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className={item.emphasis ? "text-sm font-semibold text-white" : "text-sm font-semibold text-slate-950"}>
+                        {item.label}
+                      </p>
+                      <p className={item.emphasis ? "mt-2 text-xs leading-5 text-slate-300" : "mt-2 text-xs leading-5 text-slate-500"}>
+                        {item.helper}
+                      </p>
+                    </div>
+                    <ArrowRight className={item.emphasis ? "h-4 w-4 text-white" : "h-4 w-4 text-slate-500"} />
+                  </div>
                 </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="rounded-full border-slate-300 bg-white px-5 text-slate-700 hover:bg-slate-50"
-              >
-                <Link to="/offices">Open offices</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="rounded-full border-slate-300 bg-white px-5 text-slate-700 hover:bg-slate-50"
-              >
-                <Link to="/reports">Open support</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="rounded-full border-slate-300 bg-white px-5 text-slate-700 hover:bg-slate-50"
-              >
-                <Link to="/my-bookings">My bookings</Link>
-              </Button>
+              ))}
             </div>
           </div>
 
-          <Card className="rounded-[2rem] border-slate-200/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.82))] text-white shadow-none">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-white">Today at a glance</p>
-                <Badge className="rounded-full bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10">
-                  Live view
-                </Badge>
+          <div className="grid gap-4">
+            <Card className="rounded-[2rem] border-slate-200/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.82))] text-white shadow-none">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-white">Today at a glance</p>
+                  <Badge className="rounded-full bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10">
+                    Live view
+                  </Badge>
+                </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300">Environment</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{activeOrganization?.name ?? "Not selected"}</p>
+                    <p className="mt-1 text-sm text-slate-300">{rooms.length} rooms currently visible</p>
+                  </div>
+                  <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300">Identity</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{primaryProvider}</p>
+                    <p className="mt-1 text-sm text-slate-300">{user?.displayName ?? user?.fullName}</p>
+                  </div>
+                  <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300">Bookings today</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{totalTodayItems}</p>
+                    <p className="mt-1 text-sm text-slate-300">
+                      {activeOfficeBookings.length} office windows are active right now
+                    </p>
+                  </div>
+                  <div className="rounded-[1.4rem] border border-sky-400/20 bg-sky-400/10 p-4 text-sky-50">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-sky-100/80">Support queue</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{openReports.length} open items</p>
+                    <p className="mt-1 text-sm text-sky-100/80">
+                      Keep comments visible without leaving the workspace surface.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Next desk</p>
+                <p className="mt-3 text-lg font-semibold text-slate-950">
+                  {nextDeskReservation ? `${nextDeskReservation.roomName} | ${nextDeskReservation.deskLabel ?? "Desk"}` : "No desk booking yet"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {nextDeskReservation ? formatDateTime(`${nextDeskReservation.dateStart}T09:00:00`) : "The room map is clear for a new reservation."}
+                </p>
               </div>
-              <div className="mt-4 grid gap-3 text-sm text-slate-100">
-                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                  {rooms.length} rooms currently available in the active environment.
-                </div>
-                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                  {activeOfficeBookings.length} active office bookings in today&apos;s window.
-                </div>
-                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                  {roomReservations.length + officeBookings.length} personal bookings visible today.
-                </div>
-                <div className="rounded-[1.4rem] border border-sky-400/20 bg-sky-400/10 p-4 text-sky-50">
-                  Primary identity provider: <span className="font-semibold text-white">{primaryProvider}</span>
-                </div>
+
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Next office</p>
+                <p className="mt-3 text-lg font-semibold text-slate-950">
+                  {nextOfficeBooking ? nextOfficeBooking.officeName : "No office booking yet"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {nextOfficeBooking ? formatDateTime(nextOfficeBooking.startsAt) : "Private office time will appear here."}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Workspace control</p>
+                <p className="mt-3 text-lg font-semibold text-slate-950">
+                  {canManageWorkspace ? "Administrative access enabled" : "Member surface active"}
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {canManageWorkspace
+                    ? "You can move from product use to operating control without changing application context."
+                    : "Booking, offices and support are ready without extra admin noise."}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={LayoutGrid}
           label="Rooms"
@@ -225,7 +293,7 @@ export default function HomePage() {
         <MetricCard
           icon={CalendarClock}
           label="Active bookings"
-          value={String(roomReservations.length + officeBookings.length)}
+          value={String(totalTodayItems)}
           helper="Desk and office bookings already attached to your current day."
         />
         <MetricCard
@@ -236,7 +304,7 @@ export default function HomePage() {
         />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.05fr,0.95fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.02fr,0.98fr]">
         <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
@@ -245,59 +313,61 @@ export default function HomePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <Link
-              to="/rooms"
-              className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5 transition-colors hover:bg-white"
-            >
-              <p className="text-lg font-semibold text-slate-950">Rooms</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Book a desk, inspect availability and move through the room map with real access control.
-              </p>
-            </Link>
-
-            <Link
-              to="/offices"
-              className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5 transition-colors hover:bg-white"
-            >
-              <p className="text-lg font-semibold text-slate-950">Offices</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Handle owner/admin release windows, short bookings and protected occupancy rules.
-              </p>
-            </Link>
-
-            <Link
-              to="/my-bookings"
-              className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5 transition-colors hover:bg-white"
-            >
-              <p className="text-lg font-semibold text-slate-950">My bookings</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Keep your desks and offices in one timeline instead of checking each module separately.
-              </p>
-            </Link>
-
-            <Link
-              to="/reports"
-              className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5 transition-colors hover:bg-white"
-            >
-              <p className="text-lg font-semibold text-slate-950">Support</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Keep operational comments light for users and actionable for admins.
-              </p>
-            </Link>
+            {[
+              {
+                to: "/rooms",
+                title: "Rooms",
+                description: "Book a desk, inspect availability and move through the room map with real access control.",
+              },
+              {
+                to: "/offices",
+                title: "Offices",
+                description: "Handle owner/admin release windows, short bookings and protected occupancy rules.",
+              },
+              {
+                to: "/my-bookings",
+                title: "My bookings",
+                description: "Keep your desks and offices in one timeline instead of checking each module separately.",
+              },
+              {
+                to: "/reports",
+                title: "Support",
+                description: "Keep operational comments light for users and actionable for admins.",
+              },
+            ].map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50/80 p-5 transition-all hover:-translate-y-0.5 hover:bg-white"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-semibold text-slate-950">{item.title}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                  </div>
+                  <ArrowRight className="mt-1 h-4 w-4 text-slate-400" />
+                </div>
+              </Link>
+            ))}
 
             {canManageWorkspace ? (
               <Link
                 to={user?.role === "super_admin" ? "/super-admin" : "/admin-studio"}
-                className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5 transition-colors hover:bg-white"
+                className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50/80 p-5 transition-all hover:-translate-y-0.5 hover:bg-white"
               >
-                <p className="text-lg font-semibold text-slate-950">
-                  {user?.role === "super_admin" ? "Platform controls" : "Workspace administration"}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {user?.role === "super_admin"
-                    ? "Manage organizations, users and platform-wide access."
-                    : "Design room layouts, groups and operating rules for this workspace."}
-                </p>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-semibold text-slate-950">
+                      {user?.role === "super_admin" ? "Platform controls" : "Workspace administration"}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {user?.role === "super_admin"
+                        ? "Manage organizations, users and platform-wide access."
+                        : "Design room layouts, groups and operating rules for this workspace."}
+                    </p>
+                  </div>
+                  <ArrowRight className="mt-1 h-4 w-4 text-slate-400" />
+                </div>
               </Link>
             ) : null}
           </CardContent>
@@ -333,7 +403,7 @@ export default function HomePage() {
                   </Badge>
                 </div>
                 <p className="mt-3 text-lg font-semibold text-slate-950">
-                  {nextDeskReservation.roomName} • {nextDeskReservation.deskLabel ?? "Desk"}
+                  {nextDeskReservation.roomName} | {nextDeskReservation.deskLabel ?? "Desk"}
                 </p>
                 <p className="mt-2 text-sm text-slate-600">{formatDateTime(`${nextDeskReservation.dateStart}T09:00:00`)}</p>
               </article>
@@ -349,7 +419,7 @@ export default function HomePage() {
                 </div>
                 <p className="mt-3 text-lg font-semibold text-slate-950">{nextOfficeBooking.officeName}</p>
                 <p className="mt-2 text-sm text-slate-600">
-                  {formatDateTime(nextOfficeBooking.startsAt)} → {formatDateTime(nextOfficeBooking.endsAt)}
+                  {formatDateTime(nextOfficeBooking.startsAt)} {"→"} {formatDateTime(nextOfficeBooking.endsAt)}
                 </p>
               </article>
             ) : null}
