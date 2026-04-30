@@ -1,6 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, DoorClosed, LoaderCircle, ShieldCheck, UnlockKeyhole, UserRoundCheck } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  DoorClosed,
+  LoaderCircle,
+  ShieldCheck,
+  UnlockKeyhole,
+  UserRoundCheck,
+  Users,
+} from "lucide-react";
 
 import { useAuth } from "@/features/auth/context/useAuth";
 import {
@@ -16,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/components/ui/sonner";
 import { EdgeClientError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -33,6 +45,12 @@ function getDateInputValue(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+function shiftIsoDate(value: string, days: number) {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return getDateInputValue(date);
+}
+
 function toLocalIso(date: string, time: string) {
   const [year, month, day] = date.split("-").map(Number);
   const [hours, minutes] = time.split(":").map(Number);
@@ -47,6 +65,14 @@ function getOverviewWindow(date: string) {
     windowStart: start.toISOString(),
     windowEnd: end.toISOString(),
   };
+}
+
+function formatDateLabel(value: string) {
+  return new Intl.DateTimeFormat("it-IT", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  }).format(new Date(`${value}T00:00:00`));
 }
 
 function formatTimeLabel(value: string) {
@@ -67,6 +93,40 @@ function formatDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof EdgeClientError ? error.message : fallback;
+}
+
+function ReleasePresetButton({
+  preset,
+  activePreset,
+  onClick,
+}: {
+  preset: Exclude<OfficeReleaseKind, "custom">;
+  activePreset: Exclude<OfficeReleaseKind, "custom">;
+  onClick: (preset: Exclude<OfficeReleaseKind, "custom">) => void;
+}) {
+  const config = releasePresetConfig[preset];
+
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(preset)}
+      className={cn(
+        "rounded-[1.2rem] border px-3 py-3 text-sm font-medium transition-colors",
+        activePreset === preset
+          ? "border-cyan-300 bg-cyan-50 text-cyan-800"
+          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+      )}
+    >
+      <span className="block">{config.label}</span>
+      <span className="mt-1 block text-xs text-slate-500">
+        {config.start} - {config.end}
+      </span>
+    </button>
+  );
 }
 
 export default function OfficeModulePage() {
@@ -114,6 +174,14 @@ export default function OfficeModulePage() {
   );
 
   const officesOverviewKey = ["offices-overview", activeOrganizationId, selectedDate] as const;
+  const offices = officesQuery.data?.offices ?? [];
+  const totalReleaseWindows = offices.reduce((sum, office) => sum + office.releaseWindows.length, 0);
+  const totalActiveBookings = offices.reduce(
+    (sum, office) => sum + office.bookings.filter((booking) => booking.status === "active").length,
+    0,
+  );
+  const ownerControlledCount = offices.filter((office) => office.isOwnedByCurrentUser).length;
+  const selectedOfficeActiveBookings = selectedOffice?.bookings.filter((booking) => booking.status === "active") ?? [];
 
   const createReleaseMutation = useMutation({
     mutationFn: async () => {
@@ -138,8 +206,7 @@ export default function OfficeModulePage() {
       void queryClient.invalidateQueries({ queryKey: officesOverviewKey });
     },
     onError: (error) => {
-      const message = error instanceof EdgeClientError ? error.message : "Unable to create the release window.";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Unable to create the release window."));
     },
   });
 
@@ -159,8 +226,7 @@ export default function OfficeModulePage() {
       void queryClient.invalidateQueries({ queryKey: officesOverviewKey });
     },
     onError: (error) => {
-      const message = error instanceof EdgeClientError ? error.message : "Unable to remove the release window.";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Unable to remove the release window."));
     },
   });
 
@@ -185,8 +251,7 @@ export default function OfficeModulePage() {
       void queryClient.invalidateQueries({ queryKey: officesOverviewKey });
     },
     onError: (error) => {
-      const message = error instanceof EdgeClientError ? error.message : "Unable to create the booking.";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Unable to create the booking."));
     },
   });
 
@@ -206,8 +271,7 @@ export default function OfficeModulePage() {
       void queryClient.invalidateQueries({ queryKey: officesOverviewKey });
     },
     onError: (error) => {
-      const message = error instanceof EdgeClientError ? error.message : "Unable to cancel the booking.";
-      toast.error(message);
+      toast.error(getErrorMessage(error, "Unable to cancel the booking."));
     },
   });
 
@@ -223,357 +287,483 @@ export default function OfficeModulePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.88)_50%,rgba(224,242,254,0.62))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
-        <div className="grid gap-6 xl:grid-cols-[1.12fr,0.88fr]">
+    <div className="mx-auto max-w-[1540px] space-y-8">
+      <section className="overflow-hidden rounded-[2.8rem] border border-white/65 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9)_46%,rgba(224,242,254,0.58))] p-7 shadow-[0_28px_90px_-50px_rgba(15,23,42,0.42)] backdrop-blur sm:p-9">
+        <div className="grid gap-8 xl:grid-cols-[1.14fr,0.86fr]">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-sky-700">Offices</p>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              Manage executive spaces with tight control, then open them in elegant, precise booking windows.
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="rounded-full bg-sky-100 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-100">
+                Offices
+              </Badge>
+              <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+                {activeOrganization.name}
+              </Badge>
+            </div>
+
+            <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+              Open private offices with measured control, then let bookings move through a calm and precise timeline.
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Offices belong to <span className="font-medium text-slate-900">{activeOrganization.name}</span>. Owners
-              and admins can open availability for part of the day or the full day, while bookings stay constrained to
-              15-minute increments and a maximum of 8 hours.
+              Owners and admins can release part of the day or the full day, while office bookings stay constrained to
+              15-minute increments and a maximum of 8 hours. The result should feel private, trustworthy and easy to
+              read.
             </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 p-1 shadow-sm">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setSelectedDate((current) => shiftIsoDate(current, -1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(event) => setSelectedDate(event.target.value)}
+                  className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setSelectedDate((current) => shiftIsoDate(current, 1))}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 rounded-full border-slate-200 bg-white/95 px-4 text-slate-700 hover:bg-slate-50"
+                onClick={() => setSelectedDate(getDateInputValue())}
+              >
+                Today
+              </Button>
+            </div>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Portfolio</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{offices.length}</p>
+                <p className="mt-1 text-sm text-slate-500">Offices visible for this environment.</p>
+              </div>
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Open windows</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{totalReleaseWindows}</p>
+                <p className="mt-1 text-sm text-slate-500">Release windows on {formatDateLabel(selectedDate)}.</p>
+              </div>
+              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Active bookings</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{totalActiveBookings}</p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {ownerControlledCount} offices currently under your direct ownership.
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid gap-3 text-sm text-slate-700">
-            <div className="rounded-[1.4rem] border border-white/70 bg-white/80 p-4 shadow-sm">
-              Morning maps to 08:00-13:00, afternoon to 13:00-18:00 and full day to 08:00-18:00.
-            </div>
-            <div className="rounded-[1.4rem] border border-white/70 bg-white/80 p-4 shadow-sm">
-              Booking overlap is blocked before confirmation, so office occupancy stays reliable.
-            </div>
-            <div className="rounded-[1.4rem] border border-white/70 bg-white/80 p-4 shadow-sm">
-              Owners and admins keep control of release windows without turning the flow into a complicated planner.
-            </div>
-          </div>
+          <Card className="rounded-[2rem] border-slate-200/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.82))] text-white shadow-none">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-white">Office focus</p>
+                <Badge className="rounded-full bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10">
+                  {formatDateLabel(selectedDate)}
+                </Badge>
+              </div>
+              <div className="mt-5 grid gap-3 text-sm text-slate-100">
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                  <span className="font-semibold text-white">{selectedOffice?.name ?? "Pick an office"}</span>
+                  <span className="mt-1 block text-slate-300">
+                    {selectedOffice
+                      ? `${selectedOffice.ownerLabel ?? "No owner"} | ${selectedOffice.capacity} seats`
+                      : "The timeline and release controls will adapt here."}
+                  </span>
+                </div>
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                  <span className="font-semibold text-white">
+                    {selectedOffice?.isManageableByCurrentUser ? "Management enabled" : "Consumer view"}
+                  </span>
+                  <span className="mt-1 block text-slate-300">
+                    {selectedOffice?.isManageableByCurrentUser
+                      ? "You can open and close release windows for this office."
+                      : "Only the owner or an org admin can change release state."}
+                  </span>
+                </div>
+                <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                  <span className="font-semibold text-white">{selectedOfficeActiveBookings.length} active bookings</span>
+                  <span className="mt-1 block text-slate-300">Bookings stay capped at 8 hours and 15-minute increments.</span>
+                </div>
+                <div className="rounded-[1.4rem] border border-sky-400/20 bg-sky-400/10 p-4 text-sky-50">
+                  Primary goal: keep private office access elegant without turning it into a heavy planner.
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr,1.1fr]">
-        <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
-          <CardHeader className="gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <CardTitle className="text-xl text-slate-950">Release control</CardTitle>
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
-                className="h-11 max-w-[190px] rounded-xl border-slate-200"
-              />
-            </div>
+      <div className="grid gap-6 xl:grid-cols-[320px,minmax(0,1fr)]">
+        <Card className="rounded-[2rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+              <DoorClosed className="h-5 w-5 text-sky-700" />
+              Executive offices
+            </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4">
+          <CardContent className="space-y-4">
             {officesQuery.isLoading ? (
-              <div className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-6 text-sm text-slate-600">
-                <LoaderCircle className="mb-3 h-5 w-5 animate-spin text-sky-700" />
-                Loading offices for {activeOrganization.name}...
+              <div className="rounded-[1.3rem] border border-slate-200 bg-white p-4 text-sm text-slate-500">
+                <LoaderCircle className="mb-3 h-4 w-4 animate-spin text-sky-700" />
+                Loading office portfolio...
               </div>
             ) : null}
 
-            {!officesQuery.isLoading && !officesQuery.data?.offices.length ? (
-              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+            {!officesQuery.isLoading && !offices.length ? (
+              <div className="rounded-[1.3rem] border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
                 No offices exist yet for this organization.
               </div>
             ) : null}
 
-            {officesQuery.data?.offices.map((office) => (
-              <button
-                key={office.id}
-                type="button"
-                onClick={() => setSelectedOfficeId(office.id)}
-                className={cn(
-                  "rounded-[1.5rem] border p-5 text-left transition-colors",
-                  office.id === selectedOffice?.id
-                    ? "border-sky-200 bg-sky-50 shadow-sm"
-                    : "border-slate-200/70 bg-slate-50 hover:bg-white",
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-950">{office.name}</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Owner: {office.ownerLabel ?? "Not assigned"} | {office.floorLabel ?? "Floor unset"}
-                    </p>
-                    <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">
+            <ScrollArea className="h-[760px] rounded-[1.4rem] border border-slate-200 bg-slate-50/70">
+              <div className="grid gap-3 p-3">
+                {offices.map((office) => (
+                  <button
+                    key={office.id}
+                    type="button"
+                    onClick={() => setSelectedOfficeId(office.id)}
+                    className={cn(
+                      "rounded-[1.4rem] border p-4 text-left transition-all",
+                      office.id === selectedOffice?.id
+                        ? "border-sky-200 bg-[linear-gradient(180deg,rgba(240,249,255,0.92),rgba(255,255,255,0.98))] text-sky-900 shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:bg-slate-50",
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold">{office.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {office.ownerLabel ?? "No owner"} | {office.floorLabel ?? "Floor unset"}
+                        </p>
+                      </div>
+                      <Badge className="rounded-full bg-slate-950 px-3 py-1 text-white hover:bg-slate-950">
+                        {office.capacity}
+                      </Badge>
+                    </div>
+                    <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">
                       {office.locationLabel ?? "Location unset"}
                     </p>
-                  </div>
-                  <Badge className="rounded-full bg-slate-950 px-3 py-1 text-white hover:bg-slate-950">
-                    {office.capacity} seats
-                  </Badge>
-                </div>
-              </button>
-            ))}
-
-            {selectedOffice ? (
-              <div className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">Release preset</p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {selectedOffice.isManageableByCurrentUser
-                        ? "You can release this office because you are the owner or an org admin."
-                        : "Only the owner or an org admin can release this office."}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
-                    {selectedOffice.isOwnedByCurrentUser ? "Owner view" : "Consumer view"}
-                  </Badge>
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-3">
-                  {(Object.entries(releasePresetConfig) as [Exclude<OfficeReleaseKind, "custom">, { label: string; start: string; end: string }][]).map(
-                    ([preset, config]) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setSelectedReleasePreset(preset)}
-                        className={cn(
-                          "rounded-xl border px-3 py-3 text-sm font-medium transition-colors",
-                          selectedReleasePreset === preset
-                            ? "border-cyan-400 bg-cyan-50 text-cyan-700"
-                            : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
-                        )}
-                      >
-                        <span className="block">{config.label}</span>
-                        <span className="mt-1 block text-xs text-slate-500">
-                          {config.start} - {config.end}
+                    <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                      {office.isOwnedByCurrentUser ? (
+                        <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-violet-700">
+                          Owner
                         </span>
-                      </button>
-                    ),
-                  )}
-                </div>
-
-                <div className="mt-4 grid gap-2">
-                  <label className="text-sm font-medium text-slate-700" htmlFor="release-note">
-                    Release note
-                  </label>
-                  <textarea
-                    id="release-note"
-                    value={releaseNote}
-                    onChange={(event) => setReleaseNote(event.target.value)}
-                    className="min-h-[92px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-300"
-                    placeholder="Optional context for the release window"
-                    disabled={!selectedOffice.isManageableByCurrentUser}
-                  />
-                </div>
-
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Button
-                    type="button"
-                    className="rounded-xl bg-slate-950 text-white hover:bg-slate-800"
-                    onClick={() => createReleaseMutation.mutate()}
-                    disabled={!selectedOffice.isManageableByCurrentUser || createReleaseMutation.isPending}
-                  >
-                    <UnlockKeyhole className="mr-2 h-4 w-4" />
-                    {createReleaseMutation.isPending ? "Releasing..." : "Release office"}
-                  </Button>
-                </div>
+                      ) : null}
+                      {office.isManageableByCurrentUser ? (
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
+                          Manageable
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                          Book-only
+                        </span>
+                      )}
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                        {office.releaseWindows.length} windows
+                      </span>
+                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                        {office.bookings.filter((booking) => booking.status === "active").length} active
+                      </span>
+                    </div>
+                  </button>
+                ))}
               </div>
-            ) : null}
+            </ScrollArea>
           </CardContent>
         </Card>
 
         <div className="space-y-6">
-          <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
-            <CardHeader>
-              <CardTitle className="text-xl text-slate-950">Booking timeline</CardTitle>
+          <Card className="rounded-[2rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+            <CardHeader className="space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+                    <Clock3 className="h-5 w-5 text-sky-700" />
+                    {selectedOffice?.name ?? "Office timeline"}
+                  </CardTitle>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {selectedOffice
+                      ? `Follow release windows, occupant flow and booking density for ${selectedOffice.name} on ${formatDateLabel(selectedDate)}.`
+                      : "Pick an office to inspect its release windows, booking density and ownership state."}
+                  </p>
+                </div>
+                {selectedOffice ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                      {selectedOffice.capacity} seats
+                    </Badge>
+                    <Badge variant="outline" className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600">
+                      {selectedOffice.isManageableByCurrentUser ? "Control enabled" : "Booking view"}
+                    </Badge>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Release windows</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{selectedOffice?.releaseWindows.length ?? 0}</p>
+                </div>
+                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Bookings</p>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{selectedOffice?.bookings.length ?? 0}</p>
+                </div>
+                <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Owner</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">{selectedOffice?.ownerLabel ?? "Unassigned"}</p>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-5">
-              {selectedOffice ? (
-                <>
-                  <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50 p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-slate-950">{selectedOffice.name}</p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          {selectedOffice.ownerLabel ?? "No owner"} | Capacity {selectedOffice.capacity}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm text-slate-600 shadow-sm">
-                        <Clock3 className="h-4 w-4 text-sky-700" />
-                        15-minute increments
-                      </div>
-                    </div>
 
-                    <div className="mt-6 space-y-3">
-                      {(selectedOffice.releaseWindows.length ? selectedOffice.releaseWindows : [null]).map((releaseWindow, index) =>
-                        releaseWindow ? (
-                          <div
-                            key={releaseWindow.id}
-                            className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div>
-                                <p className="font-medium capitalize">{releaseWindow.releaseKind.replaceAll("_", " ")}</p>
-                                <p className="mt-1 text-emerald-800">{formatTimeRange(releaseWindow.startsAt, releaseWindow.endsAt)}</p>
-                                <p className="mt-1 text-xs text-emerald-700">
-                                  Released by {releaseWindow.releasedBy ?? "Unknown"} | {formatDateTime(releaseWindow.createdAt)}
-                                </p>
-                              </div>
-                              {selectedOffice.isManageableByCurrentUser ? (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="rounded-xl border-emerald-200 bg-white text-emerald-900 hover:bg-emerald-100"
-                                  onClick={() => removeReleaseMutation.mutate(releaseWindow.id)}
-                                  disabled={removeReleaseMutation.isPending}
-                                >
-                                  <DoorClosed className="mr-2 h-4 w-4" />
-                                  Close release
-                                </Button>
-                              ) : null}
-                            </div>
-                            {releaseWindow.note ? <p className="mt-3 text-sm text-emerald-900">{releaseWindow.note}</p> : null}
-                          </div>
-                        ) : (
-                          <div
-                            key={`empty-release-${index}`}
-                            className="rounded-[1.2rem] border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500"
-                          >
-                            No release windows yet for this date.
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50 p-5">
-                    <p className="text-sm font-semibold text-slate-950">New booking</p>
-                    <div className="mt-4 grid gap-4 md:grid-cols-3">
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium text-slate-700" htmlFor="booking-start">
-                          Start
-                        </label>
-                        <Input
-                          id="booking-start"
-                          type="time"
-                          step={900}
-                          value={bookingStartTime}
-                          onChange={(event) => setBookingStartTime(event.target.value)}
-                          className="h-11 rounded-xl border-slate-200"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium text-slate-700" htmlFor="booking-end">
-                          End
-                        </label>
-                        <Input
-                          id="booking-end"
-                          type="time"
-                          step={900}
-                          value={bookingEndTime}
-                          onChange={(event) => setBookingEndTime(event.target.value)}
-                          className="h-11 rounded-xl border-slate-200"
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium text-slate-700" htmlFor="attendee-count">
-                          People
-                        </label>
-                        <Input
-                          id="attendee-count"
-                          type="number"
-                          min={1}
-                          max={selectedOffice.capacity}
-                          value={attendeeCount}
-                          onChange={(event) => setAttendeeCount(event.target.value)}
-                          className="h-11 rounded-xl border-slate-200"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-4 grid gap-2">
-                      <label className="text-sm font-medium text-slate-700" htmlFor="booking-note">
-                        Booking note
-                      </label>
-                      <textarea
-                        id="booking-note"
-                        value={bookingNote}
-                        onChange={(event) => setBookingNote(event.target.value)}
-                        className="min-h-[92px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-300"
-                        placeholder="Optional context for the booking"
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <Button
-                        type="button"
-                        className="rounded-xl bg-slate-950 text-white hover:bg-slate-800"
-                        onClick={() => createBookingMutation.mutate()}
-                        disabled={createBookingMutation.isPending}
-                      >
-                        {createBookingMutation.isPending ? "Booking..." : "Book office"}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50 p-5">
-                    <p className="text-sm font-semibold text-slate-950">Active bookings</p>
-                    <div className="mt-4 grid gap-3">
-                      {(selectedOffice.bookings.length ? selectedOffice.bookings : [null]).map((booking, index) =>
-                        booking ? (
-                          <article
-                            key={booking.id}
-                            className="rounded-[1.2rem] border border-slate-200/70 bg-white px-4 py-4 text-sm text-slate-600"
-                          >
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                              <div>
-                                <p className="font-medium text-slate-950">{booking.bookedBy}</p>
-                                <p className="mt-1">{formatTimeRange(booking.startsAt, booking.endsAt)}</p>
-                                <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">
-                                  {booking.attendeeCount} people | {booking.status}
-                                </p>
-                              </div>
-                              {booking.canCancel ? (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className="rounded-xl border-slate-200 bg-slate-50"
-                                  onClick={() => cancelBookingMutation.mutate(booking.id)}
-                                  disabled={cancelBookingMutation.isPending}
-                                >
-                                  Cancel
-                                </Button>
-                              ) : null}
-                            </div>
-                            {booking.note ? <p className="mt-3 text-slate-600">{booking.note}</p> : null}
-                          </article>
-                        ) : (
-                          <div
-                            key={`empty-booking-${index}`}
-                            className="rounded-[1.2rem] border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500"
-                          >
-                            No bookings yet for this date.
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                </>
-              ) : (
+            <CardContent className="space-y-6">
+              {!selectedOffice ? (
                 <div className="rounded-[1.6rem] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
                   Pick an office to inspect its release windows and bookings.
                 </div>
+              ) : (
+                <>
+                  <div className="grid gap-6 xl:grid-cols-[0.92fr,1.08fr]">
+                    <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50 p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-950">Release control</p>
+                          <p className="mt-1 text-sm text-slate-600">
+                            {selectedOffice.isManageableByCurrentUser
+                              ? "You can open availability because you are the owner or an org admin."
+                              : "Only the owner or an org admin can change release state."}
+                          </p>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600"
+                        >
+                          {selectedOffice.isOwnedByCurrentUser ? "Owner view" : "Reader view"}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-5 grid grid-cols-3 gap-3">
+                        {(Object.keys(releasePresetConfig) as Exclude<OfficeReleaseKind, "custom">[]).map((preset) => (
+                          <ReleasePresetButton
+                            key={preset}
+                            preset={preset}
+                            activePreset={selectedReleasePreset}
+                            onClick={setSelectedReleasePreset}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="mt-5 grid gap-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="release-note">
+                          Release note
+                        </label>
+                        <textarea
+                          id="release-note"
+                          value={releaseNote}
+                          onChange={(event) => setReleaseNote(event.target.value)}
+                          className="min-h-[100px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-300"
+                          placeholder="Optional context for the release window"
+                          disabled={!selectedOffice.isManageableByCurrentUser}
+                        />
+                      </div>
+
+                      <div className="mt-5">
+                        <Button
+                          type="button"
+                          className="h-11 rounded-xl bg-slate-950 text-white hover:bg-slate-800"
+                          onClick={() => createReleaseMutation.mutate()}
+                          disabled={!selectedOffice.isManageableByCurrentUser || createReleaseMutation.isPending}
+                        >
+                          <UnlockKeyhole className="mr-2 h-4 w-4" />
+                          {createReleaseMutation.isPending ? "Releasing..." : "Release office"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50 p-5">
+                      <p className="text-sm font-semibold text-slate-950">Timeline</p>
+                      <div className="mt-4 space-y-3">
+                        {selectedOffice.releaseWindows.length ? (
+                          selectedOffice.releaseWindows.map((releaseWindow) => (
+                            <div
+                              key={releaseWindow.id}
+                              className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                  <p className="font-medium capitalize">{releaseWindow.releaseKind.replaceAll("_", " ")}</p>
+                                  <p className="mt-1 text-emerald-800">
+                                    {formatTimeRange(releaseWindow.startsAt, releaseWindow.endsAt)}
+                                  </p>
+                                  <p className="mt-1 text-xs text-emerald-700">
+                                    Released by {releaseWindow.releasedBy ?? "Unknown"} | {formatDateTime(releaseWindow.createdAt)}
+                                  </p>
+                                </div>
+                                {selectedOffice.isManageableByCurrentUser ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-xl border-emerald-200 bg-white text-emerald-900 hover:bg-emerald-100"
+                                    onClick={() => removeReleaseMutation.mutate(releaseWindow.id)}
+                                    disabled={removeReleaseMutation.isPending}
+                                  >
+                                    Close release
+                                  </Button>
+                                ) : null}
+                              </div>
+                              {releaseWindow.note ? <p className="mt-3 text-sm text-emerald-900">{releaseWindow.note}</p> : null}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="rounded-[1.2rem] border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                            No release windows yet for this date.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6 xl:grid-cols-[0.92fr,1.08fr]">
+                    <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50 p-5">
+                      <p className="text-sm font-semibold text-slate-950">New booking</p>
+                      <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium text-slate-700" htmlFor="booking-start">
+                            Start
+                          </label>
+                          <Input
+                            id="booking-start"
+                            type="time"
+                            step={900}
+                            value={bookingStartTime}
+                            onChange={(event) => setBookingStartTime(event.target.value)}
+                            className="h-11 rounded-xl border-slate-200"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium text-slate-700" htmlFor="booking-end">
+                            End
+                          </label>
+                          <Input
+                            id="booking-end"
+                            type="time"
+                            step={900}
+                            value={bookingEndTime}
+                            onChange={(event) => setBookingEndTime(event.target.value)}
+                            className="h-11 rounded-xl border-slate-200"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium text-slate-700" htmlFor="attendee-count">
+                            People
+                          </label>
+                          <Input
+                            id="attendee-count"
+                            type="number"
+                            min={1}
+                            max={selectedOffice.capacity}
+                            value={attendeeCount}
+                            onChange={(event) => setAttendeeCount(event.target.value)}
+                            className="h-11 rounded-xl border-slate-200"
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-2">
+                        <label className="text-sm font-medium text-slate-700" htmlFor="booking-note">
+                          Booking note
+                        </label>
+                        <textarea
+                          id="booking-note"
+                          value={bookingNote}
+                          onChange={(event) => setBookingNote(event.target.value)}
+                          className="min-h-[100px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-300"
+                          placeholder="Optional context for the booking"
+                        />
+                      </div>
+                      <div className="mt-5">
+                        <Button
+                          type="button"
+                          className="h-11 rounded-xl bg-slate-950 text-white hover:bg-slate-800"
+                          onClick={() => createBookingMutation.mutate()}
+                          disabled={createBookingMutation.isPending}
+                        >
+                          {createBookingMutation.isPending ? "Booking..." : "Book office"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50 p-5">
+                      <p className="text-sm font-semibold text-slate-950">Active bookings</p>
+                      <div className="mt-4 grid gap-3">
+                        {selectedOffice.bookings.length ? (
+                          selectedOffice.bookings.map((booking) => (
+                            <article
+                              key={booking.id}
+                              className="rounded-[1.2rem] border border-slate-200/70 bg-white px-4 py-4 text-sm text-slate-600"
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <p className="font-medium text-slate-950">{booking.bookedBy}</p>
+                                  <p className="mt-1">{formatTimeRange(booking.startsAt, booking.endsAt)}</p>
+                                  <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">
+                                    {booking.attendeeCount} people | {booking.status}
+                                  </p>
+                                </div>
+                                {booking.canCancel ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="rounded-xl border-slate-200 bg-slate-50"
+                                    onClick={() => cancelBookingMutation.mutate(booking.id)}
+                                    disabled={cancelBookingMutation.isPending}
+                                  >
+                                    Cancel
+                                  </Button>
+                                ) : null}
+                              </div>
+                              {booking.note ? <p className="mt-3 text-slate-600">{booking.note}</p> : null}
+                            </article>
+                          ))
+                        ) : (
+                          <div className="rounded-[1.2rem] border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                            No bookings yet for this date.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-[1.4rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
+                <div className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
                   <div className="flex items-center gap-2 font-medium text-slate-950">
                     <UserRoundCheck className="h-4 w-4 text-sky-700" />
                     Ownership
                   </div>
                   <p className="mt-2">The owner can release the office directly and intervene on active bookings when needed.</p>
                 </div>
-                <div className="rounded-[1.4rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
+                <div className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
                   <div className="flex items-center gap-2 font-medium text-slate-950">
                     <ShieldCheck className="h-4 w-4 text-sky-700" />
                     Admin override
                   </div>
                   <p className="mt-2">Organization admins can operate the same controls for continuity and operational support.</p>
                 </div>
-                <div className="rounded-[1.4rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
+                <div className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
                   <div className="flex items-center gap-2 font-medium text-slate-950">
                     <Clock3 className="h-4 w-4 text-sky-700" />
                     Hard limits
