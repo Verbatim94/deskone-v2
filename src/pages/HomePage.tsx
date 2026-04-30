@@ -128,28 +128,28 @@ export default function HomePage() {
   const totalTodayItems = roomReservations.length + officeBookings.length;
 
   return (
-    <div className="mx-auto max-w-[1520px] space-y-8">
-      <section className="overflow-hidden rounded-[2.8rem] border border-white/65 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.92)_46%,rgba(224,242,254,0.62))] p-7 shadow-[0_28px_90px_-50px_rgba(15,23,42,0.42)] backdrop-blur sm:p-9">
+    <div className="mx-auto max-w-[1560px] space-y-8">
+      <section className="premium-surface overflow-hidden rounded-[3rem] p-7 sm:p-9">
         <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full bg-sky-100 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-100">
+              <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
                 Workspace operations
               </Badge>
-              <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+              <Badge variant="outline" className="rounded-full border-white/80 bg-white/70 px-3 py-1 text-slate-600">
                 {activeOrganization?.name ?? "No environment"}
               </Badge>
-              <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+              <Badge variant="outline" className="rounded-full border-white/80 bg-white/70 px-3 py-1 text-slate-600">
                 Provider: {primaryProvider}
               </Badge>
             </div>
 
-            <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              A calmer workspace experience for desks, private offices and everyday operational flow.
+            <h1 className="premium-display mt-5 max-w-3xl text-[2.55rem] font-semibold tracking-tight text-slate-950 sm:text-[4.45rem] sm:leading-[1.02]">
+              The workspace OS that makes planning feel effortless, polished and a little more alive.
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
               {activeOrganization
-                ? `You are working inside ${activeOrganization.name}. From here your team can book desks, manage office availability and keep support requests visible without switching between tools.`
+                ? `You are inside ${activeOrganization.name}. Book the right neighborhood, release private offices and keep daily operations visible from one atmospheric surface.`
                 : "As soon as an organization is active, the workspace modules will become available here."}
             </p>
 
@@ -182,8 +182,8 @@ export default function HomePage() {
                   to={item.to}
                   className={
                     item.emphasis
-                      ? "rounded-[1.6rem] border border-slate-950/10 bg-slate-950 p-4 text-white shadow-[0_22px_50px_-35px_rgba(15,23,42,0.85)] transition-transform hover:-translate-y-0.5"
-                      : "rounded-[1.6rem] border border-white/80 bg-white/88 p-4 text-slate-900 shadow-sm transition-transform hover:-translate-y-0.5"
+                      ? "rounded-[1.8rem] border border-sky-300/25 bg-[linear-gradient(135deg,rgba(55,107,255,0.98),rgba(31,62,168,0.96)_70%,rgba(139,109,255,0.92))] p-4 text-white shadow-[0_30px_60px_-34px_rgba(55,107,255,0.62)] transition-transform hover:-translate-y-0.5"
+                      : "rounded-[1.8rem] border border-white/80 bg-white/78 p-4 text-slate-900 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur transition-transform hover:-translate-y-0.5"
                   }
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -203,7 +203,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-4">
-            <Card className="rounded-[2rem] border-slate-200/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.82))] text-white shadow-none">
+            <Card className="premium-dark rounded-[2.25rem] border-slate-900/80 text-white shadow-none">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-white">Today at a glance</p>
@@ -240,8 +240,8 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Next desk</p>
                 <p className="mt-3 text-lg font-semibold text-slate-950">
                   {nextDeskReservation ? `${nextDeskReservation.roomName} | ${nextDeskReservation.deskLabel ?? "Desk"}` : "No desk booking yet"}
@@ -251,7 +251,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Next office</p>
                 <p className="mt-3 text-lg font-semibold text-slate-950">
                   {nextOfficeBooking ? nextOfficeBooking.officeName : "No office booking yet"}
@@ -261,7 +261,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Workspace control</p>
                 <p className="mt-3 text-lg font-semibold text-slate-950">
                   {canManageWorkspace ? "Administrative access enabled" : "Member surface active"}

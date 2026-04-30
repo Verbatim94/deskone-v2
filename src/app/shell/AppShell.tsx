@@ -53,37 +53,37 @@ export function AppShell() {
   });
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.14),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(249,115,22,0.1),_transparent_24%),linear-gradient(180deg,_#f8fbff,_#f7f8fb_48%,_#f8fafc)] text-foreground">
-      <div className="mx-auto min-h-screen w-full max-w-[1600px] px-4 py-4 sm:px-6 lg:px-8">
-        <header className="rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.76))] shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur">
+    <div className="min-h-screen text-foreground">
+      <div className="mx-auto min-h-screen w-full max-w-[1640px] px-4 py-4 sm:px-6 lg:px-10">
+        <header className="premium-surface overflow-hidden rounded-[2.3rem]">
           <div className="flex flex-col gap-6 p-5 lg:p-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex items-center gap-4">
                 <img
                   src={deskoneLogo}
                   alt="Deskone"
-                  className="h-14 w-14 rounded-2xl border border-slate-200/70 bg-white object-contain p-2 shadow-sm"
+                  className="h-14 w-14 rounded-[1.35rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,245,255,0.96))] object-contain p-2 shadow-[0_18px_32px_-22px_rgba(55,107,255,0.42)]"
                 />
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge className="rounded-full bg-sky-100 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-100">
+                    <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
                       Deskone
                     </Badge>
-                    <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+                    <Badge variant="outline" className="rounded-full border-white/80 bg-white/70 px-3 py-1 text-slate-600">
                       Workspace operating system
                     </Badge>
                   </div>
-                  <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-                    A calmer workspace surface for rooms, offices and operations.
+                  <p className="premium-display mt-3 text-[2rem] font-semibold tracking-tight text-slate-950 sm:text-[2.45rem]">
+                    A calmer, brighter way to move through rooms, offices and daily flow.
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Navigation stays light, while the page itself gets the room it needs to feel premium and useful.
+                    Navigation stays light, while the workspace gets a more atmospheric, premium rhythm.
                   </p>
                 </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[460px]">
-                <div className="rounded-[1.4rem] border border-slate-200/80 bg-white/85 p-4 shadow-sm">
+                <div className="rounded-[1.6rem] border border-white/75 bg-white/78 p-4 shadow-[0_24px_54px_-34px_rgba(15,23,42,0.18)] backdrop-blur">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">Active environment</p>
                   <p className="mt-2 text-base font-semibold text-slate-950">
                     {activeOrganization?.name ?? "No organization yet"}
@@ -94,7 +94,7 @@ export function AppShell() {
                       : "Choose the workspace you want to operate in."}
                   </p>
                   <select
-                    className="mt-4 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none focus:border-sky-300"
+                    className="mt-4 h-11 w-full rounded-2xl border border-white/80 bg-[linear-gradient(180deg,rgba(244,247,255,0.92),rgba(255,255,255,0.98))] px-3 text-sm text-slate-700 outline-none transition focus:border-sky-300"
                     value={activeOrganizationId ?? ""}
                     onChange={(event) => setActiveOrganizationId(event.target.value)}
                     disabled={!organizations.length}
@@ -108,7 +108,7 @@ export function AppShell() {
                   </select>
                 </div>
 
-                <div className="rounded-[1.4rem] border border-slate-900/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(15,23,42,0.88))] p-4 text-slate-50 shadow-sm">
+                <div className="premium-dark rounded-[1.6rem] border border-slate-900/80 p-4 text-slate-50">
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-[11px] uppercase tracking-[0.2em] text-slate-300">Signed in</p>
                     <Badge className="rounded-full bg-white/10 px-3 py-1 text-[10px] uppercase tracking-[0.16em] text-slate-100 hover:bg-white/10">
@@ -145,7 +145,7 @@ export function AppShell() {
               </div>
             </div>
 
-            <div className="rounded-[1.6rem] border border-slate-200/80 bg-white/85 p-3 shadow-sm">
+            <div className="rounded-[1.8rem] border border-white/80 bg-white/78 p-3 shadow-[0_24px_54px_-36px_rgba(15,23,42,0.18)] backdrop-blur">
               <nav className="flex flex-wrap gap-2">
                 {visibleNavigation.map((item) => (
                   <NavLink
@@ -156,8 +156,8 @@ export function AppShell() {
                       cn(
                         "rounded-full border px-4 py-3 text-sm font-medium transition-all",
                         isActive
-                          ? "border-sky-200 bg-[linear-gradient(180deg,rgba(240,249,255,0.92),rgba(255,255,255,0.98))] text-sky-800 shadow-sm"
-                          : "border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950",
+                          ? "border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(235,244,255,0.96))] text-sky-800 shadow-[0_18px_34px_-24px_rgba(55,107,255,0.46)]"
+                          : "border-transparent bg-transparent text-slate-600 hover:border-white/70 hover:bg-white/65 hover:text-slate-950",
                       )
                     }
                   >

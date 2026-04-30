@@ -305,32 +305,31 @@ export default function RoomsPage() {
   const todayIsoDate = getTodayIsoDate();
 
   return (
-    <div className="mx-auto max-w-[1540px] space-y-8">
-      <section className="overflow-hidden rounded-[2.8rem] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.88)_42%,rgba(224,242,254,0.62))] p-7 shadow-[0_28px_90px_-54px_rgba(15,23,42,0.42)] backdrop-blur sm:p-9">
+    <div className="mx-auto max-w-[1580px] space-y-8">
+      <section className="premium-surface overflow-hidden rounded-[3rem] p-7 sm:p-9">
         <div className="grid gap-8 xl:grid-cols-[1.12fr,0.88fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="rounded-full bg-sky-100 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-100">
+              <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
                 Premium booking
               </Badge>
-              <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+              <Badge variant="outline" className="rounded-full border-white/80 bg-white/70 px-3 py-1 text-slate-600">
                 {activeOrganization?.name ?? "No organization"}
               </Badge>
             </div>
 
-            <h1 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Choose the right neighborhood, read the live map and secure the best desk in one flow.
+            <h1 className="premium-display mt-5 max-w-3xl text-[2.55rem] font-semibold tracking-tight text-slate-950 sm:text-[4.25rem] sm:leading-[1.02]">
+              Choose the right neighborhood, read the map instantly and claim the best spot with confidence.
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Rooms now behave like a polished product surface: curated access, instant availability, half-day
-              booking logic and a map that feels calm instead of administrative.
+              Rooms should feel like the signature moment of Deskone: curated access, living availability and a booking flow that feels more rewarding than transactional.
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3">
               <SegmentButton segment="full" activeSegment={selectedSegment} onClick={setSelectedSegment} />
               <SegmentButton segment="am" activeSegment={selectedSegment} onClick={setSelectedSegment} />
               <SegmentButton segment="pm" activeSegment={selectedSegment} onClick={setSelectedSegment} />
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white/95 p-1 shadow-sm">
+              <div className="flex items-center gap-2 rounded-full border border-white/85 bg-white/80 p-1 shadow-[0_20px_42px_-26px_rgba(55,107,255,0.24)] backdrop-blur">
                 <Button
                   type="button"
                   variant="ghost"
@@ -367,17 +366,17 @@ export default function RoomsPage() {
             </div>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Accessible rooms</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-950">{rooms.length}</p>
                 <p className="mt-1 text-sm text-slate-500">Visible in your current environment.</p>
               </div>
-              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Desk capacity</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-950">{totalAccessibleDesks}</p>
                 <p className="mt-1 text-sm text-slate-500">Total desks across your accessible neighborhoods.</p>
               </div>
-              <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Access profile</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-950">{roomMixLabel}</p>
                 <p className="mt-1 text-sm text-slate-500">Direct admin control and shared room access combined.</p>
@@ -385,7 +384,7 @@ export default function RoomsPage() {
             </div>
           </div>
 
-          <Card className="rounded-[2rem] border-slate-200/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(15,23,42,0.82))] text-white shadow-none">
+          <Card className="premium-dark rounded-[2.2rem] border-slate-900/80 text-white shadow-none">
             <CardContent className="p-6">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-white">Booking focus</p>
