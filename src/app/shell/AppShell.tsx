@@ -67,31 +67,18 @@ export function AppShell() {
         <header className="border-b border-white/70 bg-white/45 backdrop-blur-xl">
           <div className="flex flex-col gap-4 px-2 py-4 lg:px-1">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center">
                 <img
                   src={deskoneLogo}
                   alt="Deskone"
                   className="h-12 w-12 rounded-[1rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,245,255,0.96))] object-contain p-2 shadow-[0_18px_32px_-22px_rgba(55,107,255,0.28)]"
                 />
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
-                      Deskone
-                    </Badge>
-                    <Badge variant="outline" className="rounded-full border-white/80 bg-white/55 px-3 py-1 text-slate-600">
-                      Workspace operating system
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm font-medium text-slate-700">
-                    Deskone Core
-                  </p>
-                </div>
               </div>
 
               <div className="flex flex-col gap-3 xl:items-end">
                 <div className="flex flex-wrap items-center gap-3">
                   <select
-                    className="h-10 min-w-[220px] rounded-full border border-white/85 bg-white/70 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
+                    className="h-10 min-w-[220px] rounded-full border border-white/85 bg-white/60 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
                     value={activeOrganizationId ?? ""}
                     onChange={(event) => setActiveOrganizationId(event.target.value)}
                     disabled={!organizations.length}
@@ -104,9 +91,9 @@ export function AppShell() {
                     ))}
                   </select>
 
-                  <div className="flex items-center gap-3 rounded-full border border-white/85 bg-white/70 px-4 py-2.5 text-sm text-slate-700">
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-slate-950">
+                  <div className="flex items-center gap-3 rounded-full border border-white/85 bg-white/60 px-4 py-2 text-sm text-slate-700">
+                    <div className="min-w-0 leading-tight">
+                      <p className="truncate text-[15px] font-semibold text-slate-950">
                         {user?.displayName ?? user?.fullName ?? "Unknown user"}
                       </p>
                       <p className="truncate text-xs text-slate-500">
@@ -123,7 +110,7 @@ export function AppShell() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-9 rounded-full border-white/85 bg-white/65 px-4 text-slate-700 hover:bg-white hover:text-slate-950"
+                    className="h-9 rounded-full border-white/80 bg-white/55 px-4 text-slate-700 hover:bg-white hover:text-slate-950"
                     onClick={() => void revokeAllSessions()}
                   >
                     Revoke all sessions
@@ -164,10 +151,10 @@ export function AppShell() {
                 ))}
               </nav>
 
-              <div className="hidden text-sm text-slate-500 xl:block">
+              <div className="hidden text-right text-sm text-slate-500 xl:block">
                 {activeOrganization
                   ? `${activeOrganization.slug} · ${activeOrganization.membershipRole}`
-                  : "Choose the workspace you want to operate in."}
+                  : ""}
               </div>
             </div>
           </div>
