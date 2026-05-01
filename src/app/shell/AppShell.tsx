@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
   CalendarDays,
+  ChevronDown,
   DoorClosed,
   Home,
   LayoutGrid,
@@ -12,11 +13,20 @@ import {
   Shield,
   ShieldCheck,
   SquareCheckBig,
+  UserCog,
 } from "lucide-react";
 
-import deskoneLogo from "@/assets/deskone-logo.png";
+import deskoneWordmark from "@/assets/deskone-wordmark.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/auth/context/useAuth";
 import type { AppRole } from "@/features/auth/types";
 import { cn } from "@/lib/utils";
@@ -58,15 +68,15 @@ export function AppShell() {
     <div className="min-h-screen text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[1640px] px-4 py-4 sm:px-6 lg:px-10">
         <header className="border-b border-sky-100/80 bg-white/72 backdrop-blur-xl">
-          <div className="flex flex-col gap-4 px-2 py-4 lg:px-1 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex min-w-0 flex-1 items-center gap-5">
+          <div className="flex flex-col gap-4 px-1 py-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 flex-1 items-center gap-6">
               <img
-                src={deskoneLogo}
+                src={deskoneWordmark}
                 alt="Deskone"
-                className="h-11 w-11 shrink-0 rounded-[1rem] border border-white bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(241,247,255,0.98))] object-contain p-2 shadow-[0_18px_32px_-22px_rgba(55,107,255,0.2)]"
+                className="h-14 w-auto shrink-0 object-contain sm:h-16"
               />
 
-              <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-2">
                 {visibleNavigation.map((item) => (
                   <NavLink
                     key={item.to}
@@ -74,10 +84,10 @@ export function AppShell() {
                     end={item.end}
                     className={({ isActive }) =>
                       cn(
-                        "rounded-full border px-4 py-2.5 text-sm font-medium transition-all",
+                        "rounded-full px-4 py-2.5 text-sm font-medium transition-all",
                         isActive
-                          ? "border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(240,247,255,0.98))] text-sky-800 shadow-[0_16px_30px_-24px_rgba(55,107,255,0.28)]"
-                          : "border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-950",
+                          ? "bg-white text-slate-950 shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)]"
+                          : "text-slate-600 hover:bg-white/80 hover:text-slate-950",
                       )
                     }
                   >
@@ -90,51 +100,78 @@ export function AppShell() {
               </nav>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2.5 xl:flex-nowrap">
-              <select
-                className="h-10 min-w-[220px] rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
-                value={activeOrganizationId ?? ""}
-                onChange={(event) => setActiveOrganizationId(event.target.value)}
-                disabled={!organizations.length}
-              >
-                {organizations.length ? null : <option value="">No organization available</option>}
-                {organizations.map((organization) => (
-                  <option key={organization.id} value={organization.id}>
-                    {organization.name} ({organization.membershipRole})
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center justify-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.22)] hover:bg-white hover:text-slate-950"
+                  >
+                    <UserCog className="mr-2 h-4 w-4" />
+                    Admin
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
 
-              <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-[0_12px_24px_-18px_rgba(55,107,255,0.14)]">
-                <div className="min-w-0 leading-tight">
-                  <p className="truncate text-[15px] font-semibold text-slate-950">
-                    {user?.displayName ?? user?.fullName ?? "Unknown user"}
-                  </p>
-                  <p className="truncate text-xs text-slate-500">
-                    {user?.username ?? "unknown"} · {user?.role ?? "unknown"}
-                  </p>
-                </div>
-                <Badge className="rounded-full bg-slate-950 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white hover:bg-slate-950">
-                  Live
-                </Badge>
-              </div>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-[340px] rounded-[1.5rem] border border-slate-200/80 bg-white/96 p-3 shadow-[0_30px_80px_-34px_rgba(15,23,42,0.22)]"
+                >
+                  <DropdownMenuLabel className="px-2 pb-3 pt-1">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-950">
+                          {user?.displayName ?? user?.fullName ?? "Unknown user"}
+                        </p>
+                        <Badge className="rounded-full bg-slate-950 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-white hover:bg-slate-950">
+                          Live
+                        </Badge>
+                      </div>
+                      <p className="text-xs font-normal text-slate-500">
+                        {user?.username ?? "unknown"} · {user?.role ?? "unknown"}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50 hover:text-slate-950"
-                onClick={() => void revokeAllSessions()}
-              >
-                Revoke all sessions
-              </Button>
-              <Button
-                type="button"
-                className="h-9 rounded-full bg-slate-950 px-4 text-white hover:bg-slate-800"
-                onClick={() => void logout()}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </Button>
+                  <DropdownMenuSeparator className="bg-slate-100" />
+
+                  <div className="px-2 py-3">
+                    <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-slate-400">Active environment</p>
+                    <select
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50/80 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
+                      value={activeOrganizationId ?? ""}
+                      onChange={(event) => setActiveOrganizationId(event.target.value)}
+                      disabled={!organizations.length}
+                    >
+                      {organizations.length ? null : <option value="">No organization available</option>}
+                      {organizations.map((organization) => (
+                        <option key={organization.id} value={organization.id}>
+                          {organization.name} ({organization.membershipRole})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <DropdownMenuSeparator className="bg-slate-100" />
+
+                  <div className="space-y-1 p-1">
+                    <DropdownMenuItem
+                      className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950"
+                      onSelect={() => void revokeAllSessions()}
+                    >
+                      Revoke all sessions
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="rounded-xl px-3 py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700"
+                      onSelect={() => void logout()}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
