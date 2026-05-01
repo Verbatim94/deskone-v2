@@ -3,14 +3,14 @@ import {
   CalendarDays,
   DoorClosed,
   Home,
-  LineChart,
   LayoutGrid,
   LifeBuoy,
+  LineChart,
   LogOut,
   NotebookTabs,
-  ShieldCheck,
   Settings2,
   Shield,
+  ShieldCheck,
   SquareCheckBig,
 } from "lucide-react";
 
@@ -43,15 +43,8 @@ const roleRank: Record<AppRole, number> = {
 };
 
 export function AppShell() {
-  const {
-    user,
-    logout,
-    revokeAllSessions,
-    organizations,
-    activeOrganizationId,
-    activeOrganization,
-    setActiveOrganizationId,
-  } = useAuth();
+  const { user, logout, revokeAllSessions, organizations, activeOrganizationId, setActiveOrganizationId } =
+    useAuth();
 
   const visibleNavigation = navigation.filter((item) => {
     if (!item.minimumRole || !user) {
@@ -65,70 +58,15 @@ export function AppShell() {
     <div className="min-h-screen text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[1640px] px-4 py-4 sm:px-6 lg:px-10">
         <header className="border-b border-sky-100/80 bg-white/72 backdrop-blur-xl">
-          <div className="flex flex-col gap-4 px-2 py-4 lg:px-1">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex items-center">
-                <img
-                  src={deskoneLogo}
-                  alt="Deskone"
-                  className="h-12 w-12 rounded-[1rem] border border-white bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(241,247,255,0.98))] object-contain p-2 shadow-[0_18px_32px_-22px_rgba(55,107,255,0.2)]"
-                />
-              </div>
+          <div className="flex flex-col gap-4 px-2 py-4 lg:px-1 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 flex-1 items-center gap-5">
+              <img
+                src={deskoneLogo}
+                alt="Deskone"
+                className="h-11 w-11 shrink-0 rounded-[1rem] border border-white bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(241,247,255,0.98))] object-contain p-2 shadow-[0_18px_32px_-22px_rgba(55,107,255,0.2)]"
+              />
 
-              <div className="flex flex-col gap-3 xl:items-end">
-                <div className="flex flex-wrap items-center gap-3">
-                  <select
-                    className="h-10 min-w-[220px] rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
-                    value={activeOrganizationId ?? ""}
-                    onChange={(event) => setActiveOrganizationId(event.target.value)}
-                    disabled={!organizations.length}
-                  >
-                    {organizations.length ? null : <option value="">No organization available</option>}
-                    {organizations.map((organization) => (
-                      <option key={organization.id} value={organization.id}>
-                        {organization.name} ({organization.membershipRole})
-                      </option>
-                    ))}
-                  </select>
-
-                  <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-[0_12px_24px_-18px_rgba(55,107,255,0.14)]">
-                    <div className="min-w-0 leading-tight">
-                      <p className="truncate text-[15px] font-semibold text-slate-950">
-                        {user?.displayName ?? user?.fullName ?? "Unknown user"}
-                      </p>
-                      <p className="truncate text-xs text-slate-500">
-                        {user?.username ?? "unknown"} · {user?.role ?? "unknown"}
-                      </p>
-                    </div>
-                    <Badge className="rounded-full bg-slate-950 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white hover:bg-slate-950">
-                      Live
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-9 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50 hover:text-slate-950"
-                    onClick={() => void revokeAllSessions()}
-                  >
-                    Revoke all sessions
-                  </Button>
-                  <Button
-                    type="button"
-                    className="h-9 rounded-full bg-slate-950 px-4 text-white hover:bg-slate-800"
-                    onClick={() => void logout()}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 border-t border-sky-100/80 pt-4">
-              <nav className="flex flex-wrap gap-2">
+              <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                 {visibleNavigation.map((item) => (
                   <NavLink
                     key={item.to}
@@ -150,12 +88,53 @@ export function AppShell() {
                   </NavLink>
                 ))}
               </nav>
+            </div>
 
-              <div className="hidden text-right text-sm text-slate-500 xl:block">
-                {activeOrganization
-                  ? `${activeOrganization.slug} · ${activeOrganization.membershipRole}`
-                  : ""}
+            <div className="flex flex-wrap items-center justify-end gap-2.5 xl:flex-nowrap">
+              <select
+                className="h-10 min-w-[220px] rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
+                value={activeOrganizationId ?? ""}
+                onChange={(event) => setActiveOrganizationId(event.target.value)}
+                disabled={!organizations.length}
+              >
+                {organizations.length ? null : <option value="">No organization available</option>}
+                {organizations.map((organization) => (
+                  <option key={organization.id} value={organization.id}>
+                    {organization.name} ({organization.membershipRole})
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-[0_12px_24px_-18px_rgba(55,107,255,0.14)]">
+                <div className="min-w-0 leading-tight">
+                  <p className="truncate text-[15px] font-semibold text-slate-950">
+                    {user?.displayName ?? user?.fullName ?? "Unknown user"}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    {user?.username ?? "unknown"} · {user?.role ?? "unknown"}
+                  </p>
+                </div>
+                <Badge className="rounded-full bg-slate-950 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-white hover:bg-slate-950">
+                  Live
+                </Badge>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                onClick={() => void revokeAllSessions()}
+              >
+                Revoke all sessions
+              </Button>
+              <Button
+                type="button"
+                className="h-9 rounded-full bg-slate-950 px-4 text-white hover:bg-slate-800"
+                onClick={() => void logout()}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign out
+              </Button>
             </div>
           </div>
         </header>
