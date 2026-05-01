@@ -3,17 +3,16 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  Building2,
   CalendarClock,
+  CheckCircle2,
   DoorClosed,
   LayoutGrid,
-  LoaderCircle,
   MessageSquareMore,
   ShieldCheck,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { getOfficesOverview } from "@/features/offices/api";
 import { getReports } from "@/features/reports/api";
@@ -43,37 +42,20 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  helper,
-}: {
-  icon: typeof Building2;
-  label: string;
-  value: string;
-  helper: string;
-}) {
-  return (
-    <Card className="rounded-[1.9rem] border-slate-200/80 bg-white/92 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.58)]">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{value}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>
-          </div>
-          <div className="rounded-2xl bg-sky-50 p-3 text-sky-700">
-            <Icon className="h-5 w-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+function getInitials(name: string | null | undefined) {
+  if (!name) {
+    return "D";
+  }
+
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 export default function HomePage() {
-  const { user, session, activeOrganization, activeOrganizationId } = useAuth();
+  const { user, activeOrganization, activeOrganizationId } = useAuth();
   const todayWindow = useMemo(() => buildTodayWindow(), []);
   const canManageWorkspace =
     user?.role === "super_admin" || activeOrganization?.membershipRole === "admin";
@@ -118,370 +100,272 @@ export default function HomePage() {
   const reports = reportsQuery.data?.reports ?? [];
   const roomReservations = scheduleQuery.data?.roomReservations ?? [];
   const officeBookings = scheduleQuery.data?.officeBookings ?? [];
-  const activeOfficeBookings = offices
-    .flatMap((office) => office.bookings)
-    .filter((booking) => booking.status === "active");
   const openReports = reports.filter((report) => report.status === "open");
-  const primaryProvider = session?.user.primaryIdentityProvider ?? "local";
   const nextDeskReservation = roomReservations[0] ?? null;
   const nextOfficeBooking = officeBookings[0] ?? null;
   const totalTodayItems = roomReservations.length + officeBookings.length;
-  const quickLinks = [
-    { to: "/rooms", label: "Rooms" },
-    { to: "/offices", label: "Offices" },
-    { to: "/reports", label: "Support" },
-    { to: "/my-bookings", label: "My bookings" },
-  ] as const;
+  const completion = Math.min(100, Math.max(12, totalTodayItems * 22 || 42));
+  const displayName = user?.displayName ?? user?.fullName ?? "Deskone user";
+  const initials = getInitials(displayName);
+
+  const taskGroups = [
+    {
+      label: "Shared rooms",
+      helper: `${rooms.length} visible`,
+      value: `${Math.max(38, rooms.length * 9)}%`,
+      tone: "bg-pink-50 text-pink-500",
+      to: "/shared-rooms",
+    },
+    {
+      label: "Private offices",
+      helper: `${offices.length} managed`,
+      value: `${Math.max(24, offices.length * 13)}%`,
+      tone: "bg-violet-50 text-violet-500",
+      to: "/offices",
+    },
+    {
+      label: "Support queue",
+      helper: `${openReports.length} open`,
+      value: `${Math.max(15, openReports.length * 17)}%`,
+      tone: "bg-orange-50 text-orange-500",
+      to: "/reports",
+    },
+  ];
 
   return (
-    <div className="mx-auto max-w-[1560px] space-y-8">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
-            Workspace operations
-          </Badge>
-          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
-            {activeOrganization?.name ?? "No environment"}
-          </Badge>
-          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
-            Provider: {primaryProvider}
-          </Badge>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {quickLinks.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
-            >
-              {item.label}
-              <ArrowRight className="h-4 w-4 text-slate-400" />
-            </Link>
-          ))}
-        </div>
-      </div>
+    <div className="mx-auto max-w-[1380px] space-y-8">
+      <div className="grid gap-6 xl:grid-cols-[1.08fr,0.92fr]">
+        <div className="space-y-6">
+          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-[0_32px_90px_-48px_rgba(111,85,190,0.22)]">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(91,74,255,0.95),rgba(255,110,199,0.85))] text-lg font-semibold text-white shadow-[0_18px_34px_-20px_rgba(111,85,190,0.45)]">
+                    {initials}
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Hello!</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-950">{displayName}</h1>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {activeOrganization?.name ?? "No environment selected"}
+                    </p>
+                  </div>
+                </div>
+                <Badge className="rounded-full bg-violet-100 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-violet-700 hover:bg-violet-100">
+                  Live
+                </Badge>
+              </div>
 
-      <section className="hidden premium-surface overflow-hidden rounded-[3rem] p-7 sm:p-9">
-        <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr]">
+              <div className="mt-6 rounded-[1.8rem] bg-[linear-gradient(135deg,rgba(111,74,255,1),rgba(91,74,255,0.96)_55%,rgba(149,92,255,0.92))] p-5 text-white shadow-[0_34px_72px_-36px_rgba(93,64,198,0.46)]">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="max-w-[280px] text-lg font-semibold leading-7">
+                      Your workspace day is already moving.
+                    </p>
+                    <p className="mt-2 text-sm text-violet-100">
+                      {totalTodayItems
+                        ? `${totalTodayItems} active items between rooms and offices.`
+                        : "No booking yet today, so this is a good moment to plan ahead."}
+                    </p>
+                  </div>
+                  <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-white/20 bg-white/10">
+                    <div
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: `conic-gradient(#ffffff ${completion}%, rgba(255,255,255,0.18) ${completion}% 100%)`,
+                        WebkitMask:
+                          "radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px))",
+                        mask: "radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 7px))",
+                      }}
+                    />
+                    <span className="relative text-lg font-semibold">{completion}%</span>
+                  </div>
+                </div>
+
+                <div className="mt-5">
+                  <Link
+                    to="/shared-rooms"
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
+                  >
+                    View Workspace
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
-                Workspace operations
-              </Badge>
-              <Badge variant="outline" className="rounded-full border-white/80 bg-white/70 px-3 py-1 text-slate-600">
-                {activeOrganization?.name ?? "No environment"}
-              </Badge>
-              <Badge variant="outline" className="rounded-full border-white/80 bg-white/70 px-3 py-1 text-slate-600">
-                Provider: {primaryProvider}
-              </Badge>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xl font-bold tracking-tight text-slate-950">In Progress</h2>
+              <span className="text-sm text-violet-500">{totalTodayItems}</span>
             </div>
-
-            <h1 className="premium-display mt-5 max-w-3xl text-[2.55rem] font-semibold tracking-tight text-slate-950 sm:text-[4.45rem] sm:leading-[1.02]">
-              The workspace OS that makes planning feel effortless, polished and a little more alive.
-            </h1>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              {activeOrganization
-                ? `You are inside ${activeOrganization.name}. Book the right neighborhood, release private offices and keep daily operations visible from one atmospheric surface.`
-                : "As soon as an organization is active, the workspace modules will become available here."}
-            </p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:max-w-[760px] xl:grid-cols-4">
-              {[
-                {
-                  to: "/rooms",
-                  label: "Rooms",
-                  helper: "Open the flagship booking surface.",
-                  emphasis: true,
-                },
-                {
-                  to: "/offices",
-                  label: "Offices",
-                  helper: "Handle private office access and release windows.",
-                },
-                {
-                  to: "/reports",
-                  label: "Support",
-                  helper: "Review or submit operational comments.",
-                },
-                {
-                  to: "/my-bookings",
-                  label: "My bookings",
-                  helper: "Keep desks and offices in one timeline.",
-                },
-              ].map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={
-                    item.emphasis
-                      ? "rounded-[1.8rem] border border-sky-300/25 bg-[linear-gradient(135deg,rgba(55,107,255,0.98),rgba(31,62,168,0.96)_70%,rgba(139,109,255,0.92))] p-4 text-white shadow-[0_30px_60px_-34px_rgba(55,107,255,0.62)] transition-transform hover:-translate-y-0.5"
-                      : "rounded-[1.8rem] border border-white/80 bg-white/78 p-4 text-slate-900 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur transition-transform hover:-translate-y-0.5"
-                  }
-                >
-                  <div className="flex items-start justify-between gap-3">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card className="rounded-[1.7rem] border-white/80 bg-[linear-gradient(180deg,#eef6ff,#ffffff)] shadow-[0_20px_44px_-28px_rgba(91,74,255,0.16)]">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className={item.emphasis ? "text-sm font-semibold text-white" : "text-sm font-semibold text-slate-950"}>
-                        {item.label}
-                      </p>
-                      <p className={item.emphasis ? "mt-2 text-xs leading-5 text-slate-300" : "mt-2 text-xs leading-5 text-slate-500"}>
-                        {item.helper}
+                      <p className="text-sm text-slate-500">Desk booking</p>
+                      <p className="mt-2 text-xl font-semibold leading-8 text-slate-950">
+                        {nextDeskReservation
+                          ? `${nextDeskReservation.roomName} desk ${nextDeskReservation.deskLabel ?? ""}`
+                          : "Choose your next desk"}
                       </p>
                     </div>
-                    <ArrowRight className={item.emphasis ? "h-4 w-4 text-white" : "h-4 w-4 text-slate-500"} />
+                    <div className="rounded-2xl bg-pink-100 p-2.5 text-pink-500">
+                      <LayoutGrid className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div className="mt-4 h-1.5 rounded-full bg-sky-100">
+                    <div className="h-full w-[78%] rounded-full bg-sky-500" />
+                  </div>
+                  <p className="mt-3 text-sm text-slate-500">
+                    {nextDeskReservation
+                      ? formatDateTime(`${nextDeskReservation.dateStart}T09:00:00`)
+                      : "Rooms stay open and ready from one map."}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-[1.7rem] border-white/80 bg-[linear-gradient(180deg,#fff5f3,#ffffff)] shadow-[0_20px_44px_-28px_rgba(255,110,199,0.14)]">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-slate-500">Office booking</p>
+                      <p className="mt-2 text-xl font-semibold leading-8 text-slate-950">
+                        {nextOfficeBooking ? nextOfficeBooking.officeName : "Release or book an office"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-orange-100 p-2.5 text-orange-500">
+                      <DoorClosed className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div className="mt-4 h-1.5 rounded-full bg-orange-100">
+                    <div className="h-full w-[64%] rounded-full bg-orange-400" />
+                  </div>
+                  <p className="mt-3 text-sm text-slate-500">
+                    {nextOfficeBooking
+                      ? formatDateTime(nextOfficeBooking.startsAt)
+                      : "Private office windows stay visible all day."}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xl font-bold tracking-tight text-slate-950">Task Groups</h2>
+              <span className="text-sm text-violet-500">{taskGroups.length}</span>
+            </div>
+            <div className="space-y-4">
+              {taskGroups.map((group, index) => (
+                <Link
+                  key={group.label}
+                  to={group.to}
+                  className="flex items-center justify-between rounded-[1.55rem] border border-white/80 bg-white/96 px-5 py-4 shadow-[0_20px_44px_-30px_rgba(91,74,255,0.16)] transition hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${group.tone}`}>
+                      {index === 0 ? <LayoutGrid className="h-4 w-4" /> : index === 1 ? <DoorClosed className="h-4 w-4" /> : <MessageSquareMore className="h-4 w-4" />}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-950">{group.label}</p>
+                      <p className="text-sm text-slate-500">{group.helper}</p>
+                    </div>
+                  </div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-[3px] border-violet-400 text-sm font-semibold text-slate-950">
+                    {group.value}
                   </div>
                 </Link>
               ))}
             </div>
           </div>
-
-          <div className="grid gap-4">
-            <Card className="premium-dark rounded-[2.25rem] border-slate-900/80 text-white shadow-none">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-white">Today at a glance</p>
-                  <Badge className="rounded-full bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100 hover:bg-white/10">
-                    Live view
-                  </Badge>
-                </div>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300">Environment</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{activeOrganization?.name ?? "Not selected"}</p>
-                    <p className="mt-1 text-sm text-slate-300">{rooms.length} rooms currently visible</p>
-                  </div>
-                  <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300">Identity</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{primaryProvider}</p>
-                    <p className="mt-1 text-sm text-slate-300">{user?.displayName ?? user?.fullName}</p>
-                  </div>
-                  <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300">Bookings today</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{totalTodayItems}</p>
-                    <p className="mt-1 text-sm text-slate-300">
-                      {activeOfficeBookings.length} office windows are active right now
-                    </p>
-                  </div>
-                  <div className="rounded-[1.4rem] border border-sky-400/20 bg-sky-400/10 p-4 text-sky-50">
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-sky-100/80">Support queue</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{openReports.length} open items</p>
-                    <p className="mt-1 text-sm text-sky-100/80">
-                      Keep comments visible without leaving the workspace surface.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Next desk</p>
-                <p className="mt-3 text-lg font-semibold text-slate-950">
-                  {nextDeskReservation ? `${nextDeskReservation.roomName} | ${nextDeskReservation.deskLabel ?? "Desk"}` : "No desk booking yet"}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {nextDeskReservation ? formatDateTime(`${nextDeskReservation.dateStart}T09:00:00`) : "The room map is clear for a new reservation."}
-                </p>
-              </div>
-
-              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Next office</p>
-                <p className="mt-3 text-lg font-semibold text-slate-950">
-                  {nextOfficeBooking ? nextOfficeBooking.officeName : "No office booking yet"}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {nextOfficeBooking ? formatDateTime(nextOfficeBooking.startsAt) : "Private office time will appear here."}
-                </p>
-              </div>
-
-              <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Workspace control</p>
-                <p className="mt-3 text-lg font-semibold text-slate-950">
-                  {canManageWorkspace ? "Administrative access enabled" : "Member surface active"}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {canManageWorkspace
-                    ? "You can move from product use to operating control without changing application context."
-                    : "Booking, offices and support are ready without extra admin noise."}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
-      </section>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          icon={LayoutGrid}
-          label="Rooms"
-          value={String(rooms.length)}
-          helper="Desk-booking spaces currently visible for this environment."
-        />
-        <MetricCard
-          icon={DoorClosed}
-          label="Offices"
-          value={String(offices.length)}
-          helper="Private offices with release windows and owner/admin control."
-        />
-        <MetricCard
-          icon={CalendarClock}
-          label="Active bookings"
-          value={String(totalTodayItems)}
-          helper="Desk and office bookings already attached to your current day."
-        />
-        <MetricCard
-          icon={MessageSquareMore}
-          label="Open support"
-          value={String(openReports.length)}
-          helper="Items that still need review or a closing action."
-        />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.02fr,0.98fr]">
-        <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
-              <LayoutGrid className="h-5 w-5 text-sky-700" />
-              Core modules
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {[
-              {
-                to: "/rooms",
-                title: "Rooms",
-                description: "Book a desk, inspect availability and move through the room map with real access control.",
-              },
-              {
-                to: "/offices",
-                title: "Offices",
-                description: "Handle owner/admin release windows, short bookings and protected occupancy rules.",
-              },
-              {
-                to: "/my-bookings",
-                title: "My bookings",
-                description: "Keep your desks and offices in one timeline instead of checking each module separately.",
-              },
-              {
-                to: "/reports",
-                title: "Support",
-                description: "Keep operational comments light for users and actionable for admins.",
-              },
-            ].map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50/80 p-5 transition-all hover:-translate-y-0.5 hover:bg-white"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-lg font-semibold text-slate-950">{item.title}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
-                  </div>
-                  <ArrowRight className="mt-1 h-4 w-4 text-slate-400" />
-                </div>
-              </Link>
-            ))}
-
-            {canManageWorkspace ? (
-              <Link
-                to={user?.role === "super_admin" ? "/super-admin" : "/admin-studio"}
-                className="rounded-[1.6rem] border border-slate-200/70 bg-slate-50/80 p-5 transition-all hover:-translate-y-0.5 hover:bg-white"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-lg font-semibold text-slate-950">
-                      {user?.role === "super_admin" ? "Platform controls" : "Workspace administration"}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {user?.role === "super_admin"
-                        ? "Manage organizations, users and platform-wide access."
-                        : "Design room layouts, groups and operating rules for this workspace."}
-                    </p>
-                  </div>
-                  <ArrowRight className="mt-1 h-4 w-4 text-slate-400" />
-                </div>
-              </Link>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
-              <ShieldCheck className="h-5 w-5 text-sky-700" />
-              Your day
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {reportsQuery.isLoading || officesQuery.isLoading || scheduleQuery.isLoading ? (
-              <div className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-6 text-sm text-slate-600">
-                <LoaderCircle className="mb-3 h-5 w-5 animate-spin text-sky-700" />
-                Loading your schedule...
+        <div className="space-y-6">
+          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-[0_28px_72px_-40px_rgba(91,74,255,0.18)]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-950">Today</h2>
+                <CalendarClock className="h-5 w-5 text-violet-500" />
               </div>
-            ) : null}
-
-            {!reportsQuery.isLoading && !scheduleQuery.isLoading && !nextDeskReservation && !nextOfficeBooking && !reports.length ? (
-              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-                Nothing urgent is on your desk today.
-              </div>
-            ) : null}
-
-            {nextDeskReservation ? (
-              <article className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="font-semibold text-slate-950">Next desk reservation</p>
-                  <Badge className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-800 hover:bg-emerald-100">
-                    {nextDeskReservation.segment}
-                  </Badge>
-                </div>
-                <p className="mt-3 text-lg font-semibold text-slate-950">
-                  {nextDeskReservation.roomName} | {nextDeskReservation.deskLabel ?? "Desk"}
-                </p>
-                <p className="mt-2 text-sm text-slate-600">{formatDateTime(`${nextDeskReservation.dateStart}T09:00:00`)}</p>
-              </article>
-            ) : null}
-
-            {nextOfficeBooking ? (
-              <article className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="font-semibold text-slate-950">Next office booking</p>
-                  <Badge className="rounded-full bg-sky-100 px-3 py-1 text-sky-800 hover:bg-sky-100">
-                    {nextOfficeBooking.status}
-                  </Badge>
-                </div>
-                <p className="mt-3 text-lg font-semibold text-slate-950">{nextOfficeBooking.officeName}</p>
-                <p className="mt-2 text-sm text-slate-600">
-                  {formatDateTime(nextOfficeBooking.startsAt)} {"→"} {formatDateTime(nextOfficeBooking.endsAt)}
-                </p>
-              </article>
-            ) : null}
-
-            {reports.slice(0, 4).map((report) => (
-              <article key={report.id} className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="font-semibold text-slate-950">
-                    {report.targetType}
-                    {report.targetId ? ` | ${report.targetId}` : ""}
+              <div className="mt-5 space-y-4">
+                <div className="rounded-[1.4rem] bg-violet-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-violet-500">Environment</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">
+                    {activeOrganization?.name ?? "No environment"}
                   </p>
-                  <Badge
-                    className={
-                      report.status === "open"
-                        ? "rounded-full bg-amber-100 px-3 py-1 text-amber-800 hover:bg-amber-100"
-                        : "rounded-full bg-slate-200 px-3 py-1 text-slate-700 hover:bg-slate-200"
-                    }
-                  >
-                    {report.status}
-                  </Badge>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {canManageWorkspace ? "Administrative control available" : "Member view active"}
+                  </p>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{report.comment}</p>
-                <div className="mt-4 flex flex-wrap gap-3 text-xs uppercase tracking-[0.16em] text-slate-500">
-                  <span>{report.authorLabel ?? "Unknown"}</span>
-                  <span>{formatDateTime(report.createdAt)}</span>
+                <div className="rounded-[1.4rem] bg-sky-50 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-sky-500">Visible modules</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-600">
+                    <div className="rounded-2xl bg-white px-3 py-3">
+                      <p className="font-semibold text-slate-950">{rooms.length}</p>
+                      <p>Rooms</p>
+                    </div>
+                    <div className="rounded-2xl bg-white px-3 py-3">
+                      <p className="font-semibold text-slate-950">{offices.length}</p>
+                      <p>Offices</p>
+                    </div>
+                    <div className="rounded-2xl bg-white px-3 py-3">
+                      <p className="font-semibold text-slate-950">{openReports.length}</p>
+                      <p>Open support</p>
+                    </div>
+                    <div className="rounded-2xl bg-white px-3 py-3">
+                      <p className="font-semibold text-slate-950">{totalTodayItems}</p>
+                      <p>Bookings</p>
+                    </div>
+                  </div>
                 </div>
-              </article>
-            ))}
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[2rem] border-white/80 bg-white/96 shadow-[0_28px_72px_-40px_rgba(91,74,255,0.18)]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-950">Quick Actions</h2>
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div className="mt-5 space-y-3">
+                <Link
+                  to="/shared-rooms"
+                  className="flex items-center justify-between rounded-[1.4rem] bg-[#f6f2ff] px-4 py-4 text-slate-950 transition hover:bg-[#efe7ff]"
+                >
+                  <div>
+                    <p className="font-semibold">Shared Rooms</p>
+                    <p className="text-sm text-slate-500">Browse availability and book fast.</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-violet-500" />
+                </Link>
+                <Link
+                  to="/my-bookings"
+                  className="flex items-center justify-between rounded-[1.4rem] bg-[#fff6f3] px-4 py-4 text-slate-950 transition hover:bg-[#ffefe9]"
+                >
+                  <div>
+                    <p className="font-semibold">My Reservations</p>
+                    <p className="text-sm text-slate-500">See the calendar and upcoming items.</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-orange-500" />
+                </Link>
+                <Link
+                  to="/users"
+                  className="flex items-center justify-between rounded-[1.4rem] bg-[#eef7ff] px-4 py-4 text-slate-950 transition hover:bg-[#e5f2ff]"
+                >
+                  <div>
+                    <p className="font-semibold">Users</p>
+                    <p className="text-sm text-slate-500">Access governance and activation flow.</p>
+                  </div>
+                  <ShieldCheck className="h-4 w-4 text-sky-500" />
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
