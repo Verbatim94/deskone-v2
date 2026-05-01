@@ -15,7 +15,7 @@ import {
   UserCog,
 } from "lucide-react";
 
-import deskoneWordmark from "@/assets/deskone-wordmark-transparent.png";
+import deskoneWordmark from "@/assets/deskone-wordmark-transparent-clean.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
