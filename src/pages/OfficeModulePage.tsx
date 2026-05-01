@@ -288,7 +288,75 @@ export default function OfficeModulePage() {
 
   return (
     <div className="mx-auto max-w-[1540px] space-y-8">
-      <section className="overflow-hidden rounded-[2.8rem] border border-white/65 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9)_46%,rgba(224,242,254,0.58))] p-7 shadow-[0_28px_90px_-50px_rgba(15,23,42,0.42)] backdrop-blur sm:p-9">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="rounded-full bg-sky-100 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-100">
+            Offices
+          </Badge>
+          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+            {activeOrganization.name}
+          </Badge>
+          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+            {ownerControlledCount} owned
+          </Badge>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={() => setSelectedDate((current) => shiftIsoDate(current, -1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(event) => setSelectedDate(event.target.value)}
+              className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={() => setSelectedDate((current) => shiftIsoDate(current, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50"
+            onClick={() => setSelectedDate(getDateInputValue())}
+          >
+            Today
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Portfolio</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{offices.length}</p>
+          <p className="mt-1 text-sm text-slate-500">Offices visible for this environment.</p>
+        </div>
+        <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Open windows</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{totalReleaseWindows}</p>
+          <p className="mt-1 text-sm text-slate-500">Release windows on {formatDateLabel(selectedDate)}.</p>
+        </div>
+        <div className="rounded-[1.7rem] border border-slate-900/85 bg-slate-950 p-5 text-white shadow-sm">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-300">Focus</p>
+          <p className="mt-2 text-lg font-semibold text-white">{selectedOffice?.name ?? "Pick an office"}</p>
+          <p className="mt-1 text-sm text-slate-300">{selectedOfficeActiveBookings.length} active bookings.</p>
+        </div>
+      </div>
+
+      <section className="hidden overflow-hidden rounded-[2.8rem] border border-white/65 bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9)_46%,rgba(224,242,254,0.58))] p-7 shadow-[0_28px_90px_-50px_rgba(15,23,42,0.42)] backdrop-blur sm:p-9">
         <div className="grid gap-8 xl:grid-cols-[1.14fr,0.86fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">

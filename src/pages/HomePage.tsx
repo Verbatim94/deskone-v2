@@ -126,10 +126,42 @@ export default function HomePage() {
   const nextDeskReservation = roomReservations[0] ?? null;
   const nextOfficeBooking = officeBookings[0] ?? null;
   const totalTodayItems = roomReservations.length + officeBookings.length;
+  const quickLinks = [
+    { to: "/rooms", label: "Rooms" },
+    { to: "/offices", label: "Offices" },
+    { to: "/reports", label: "Support" },
+    { to: "/my-bookings", label: "My bookings" },
+  ] as const;
 
   return (
     <div className="mx-auto max-w-[1560px] space-y-8">
-      <section className="premium-surface overflow-hidden rounded-[3rem] p-7 sm:p-9">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
+            Workspace operations
+          </Badge>
+          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+            {activeOrganization?.name ?? "No environment"}
+          </Badge>
+          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+            Provider: {primaryProvider}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {quickLinks.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+            >
+              {item.label}
+              <ArrowRight className="h-4 w-4 text-slate-400" />
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <section className="hidden premium-surface overflow-hidden rounded-[3rem] p-7 sm:p-9">
         <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">

@@ -315,7 +315,82 @@ export default function RoomsPage() {
 
   return (
     <div className="mx-auto max-w-[1580px] space-y-8">
-      <section className="premium-surface overflow-hidden rounded-[3rem] p-7 sm:p-9">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
+            Premium booking
+          </Badge>
+          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+            {activeOrganization?.name ?? "No organization"}
+          </Badge>
+          <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+            {roomMixLabel}
+          </Badge>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <SegmentButton segment="full" activeSegment={selectedSegment} onClick={setSelectedSegment} />
+          <SegmentButton segment="am" activeSegment={selectedSegment} onClick={setSelectedSegment} />
+          <SegmentButton segment="pm" activeSegment={selectedSegment} onClick={setSelectedSegment} />
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={() => setSelectedDate((current) => shiftIsoDate(current, -1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(event) => setSelectedDate(event.target.value)}
+              className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={() => setSelectedDate((current) => shiftIsoDate(current, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50"
+            onClick={() => setSelectedDate(todayIsoDate)}
+          >
+            Today
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Accessible rooms</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{rooms.length}</p>
+          <p className="mt-1 text-sm text-slate-500">Visible in your current environment.</p>
+        </div>
+        <div className="rounded-[1.8rem] border border-white/85 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Desk capacity</p>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{totalAccessibleDesks}</p>
+          <p className="mt-1 text-sm text-slate-500">Total desks across your accessible neighborhoods.</p>
+        </div>
+        <div className="rounded-[1.8rem] border border-slate-900/85 bg-slate-950 p-5 text-white shadow-[0_20px_40px_-28px_rgba(15,23,42,0.3)]">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-slate-300">Booking focus</p>
+          <p className="mt-2 text-lg font-semibold text-white">{selectedRoom?.name ?? "Pick a room"}</p>
+          <p className="mt-1 text-sm text-slate-300">
+            {currentReservation
+              ? `${currentReservation.roomName} · ${currentReservation.deskLabel ?? "Desk"} already secured.`
+              : `Viewing ${formatDateLabel(selectedDate)} · ${segmentLabel}.`}
+          </p>
+        </div>
+      </div>
+
+      <section className="hidden premium-surface overflow-hidden rounded-[3rem] p-7 sm:p-9">
         <div className="grid gap-8 xl:grid-cols-[1.12fr,0.88fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">

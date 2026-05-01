@@ -11,7 +11,16 @@ export default function PlannerPage() {
 
   return (
     <div className="space-y-8">
-      <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge className="playful-chip rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700 hover:bg-sky-50">
+          Planner
+        </Badge>
+        <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+          {activeOrganization?.name ?? "No environment"}
+        </Badge>
+      </div>
+
+      <section className="hidden premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.15fr,0.85fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">

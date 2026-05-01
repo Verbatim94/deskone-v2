@@ -745,7 +745,19 @@ export default function SuperAdminConsolePage() {
 
   return (
       <div className="space-y-6">
-        <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.9)_48%,rgba(224,242,254,0.68))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
+        <div className="grid gap-4 xl:grid-cols-3 text-sm text-slate-700">
+          <div className="rounded-[1.4rem] border border-white/70 bg-white/85 p-4 shadow-sm">
+            Super-admin owns the platform surface. Organization admins only operate inside their environment.
+          </div>
+          <div className="rounded-[1.4rem] border border-white/70 bg-white/85 p-4 shadow-sm">
+            User profiles and identities stay separate, so directory sync can grow later without rewriting the app.
+          </div>
+          <div className="rounded-[1.4rem] border border-white/70 bg-white/85 p-4 shadow-sm">
+            All privileged mutations pass through Edge Functions and write audit events.
+          </div>
+        </div>
+
+        <section className="hidden overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.9)_48%,rgba(224,242,254,0.68))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
           <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
             <div>
               <p className="text-xs uppercase tracking-[0.28em] text-sky-700">Super-admin console</p>

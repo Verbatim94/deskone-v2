@@ -121,7 +121,19 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-8">
-      <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="playful-chip inline-flex rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700">
+          Support
+        </span>
+        <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+          {activeOrganization.name}
+        </span>
+        <span className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
+          {openReports.length} open
+        </span>
+      </div>
+
+      <section className="hidden premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.12fr,0.88fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">

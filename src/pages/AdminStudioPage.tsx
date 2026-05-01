@@ -858,15 +858,12 @@ export default function AdminStudioPage() {
   if (!hasOrganizationScope) {
     return (
       <div className="space-y-6">
-        <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
-          <p className="playful-chip inline-flex rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700">Workspace admin</p>
-          <h1 className="premium-display mt-4 text-[2.45rem] font-semibold tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.02]">
-            Pick an organization to start designing rooms and managing shared access.
-          </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-            The designer is organization-scoped by design, so we never cross environments by accident.
-          </p>
-        </section>
+        <Card className="premium-surface rounded-[2.2rem]">
+          <CardContent className="p-8 text-sm leading-7 text-slate-600">
+            Pick an organization to start designing rooms and managing shared access. The designer is
+            organization-scoped by design, so we never cross environments by accident.
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -874,22 +871,31 @@ export default function AdminStudioPage() {
   if (!hasAdminScope) {
     return (
       <div className="space-y-6">
-        <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
-          <p className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-amber-700">Workspace admin</p>
-          <h1 className="premium-display mt-4 text-[2.45rem] font-semibold tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.02]">
-            This organization is in read-only mode for your current scope.
-          </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-            Switch to an organization where you are admin, or keep the current one only for browsing.
-          </p>
-        </section>
+        <Card className="premium-surface rounded-[2.2rem]">
+          <CardContent className="p-8 text-sm leading-7 text-slate-600">
+            This organization is in read-only mode for your current scope. Switch to an organization where you are
+            admin, or keep the current one only for browsing.
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
+      <div className="grid gap-4 xl:grid-cols-3 text-sm text-slate-700">
+        <div className="rounded-[1.6rem] border border-white/80 bg-white/76 p-4 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
+          Organization admins only operate inside their active environment.
+        </div>
+        <div className="rounded-[1.6rem] border border-white/80 bg-white/76 p-4 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
+          Sharing groups accelerate large rollouts without duplicating room access one user at a time.
+        </div>
+        <div className="premium-dark rounded-[1.7rem] border border-slate-900/80 p-4 text-slate-50">
+          The designer writes typed desks, zones and scoped memberships instead of opaque blobs.
+        </div>
+      </div>
+
+      <section className="hidden premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
