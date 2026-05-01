@@ -18,6 +18,7 @@ const RoomsPage = lazy(() => import("@/pages/RoomsPage"));
 const SuperAdminConsolePage = lazy(() => import("@/pages/SuperAdminConsolePage"));
 const SetPasswordPage = lazy(() => import("@/pages/SetPasswordPage"));
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
+const SharedRoomsPage = lazy(() => import("@/pages/SharedRoomsPage"));
 
 function RouteFallback() {
   return (
@@ -58,7 +59,7 @@ export function AppRouter() {
             <Route path="/" element={<HomePage />} />
             <Route path="/calendar" element={<MyBookingsPage />} />
             <Route path="/my-bookings" element={<MyBookingsPage />} />
-            <Route path="/shared-rooms" element={<RoomsPage />} />
+            <Route path="/shared-rooms" element={<SharedRoomsPage />} />
             <Route path="/rooms" element={<RoomsPage />} />
             <Route path="/reservations" element={<MyBookingsPage />} />
             <Route path="/calendar-view" element={<MyBookingsPage />} />

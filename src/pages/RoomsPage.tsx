@@ -1,5 +1,6 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import {
   CalendarDays,
   ChevronLeft,
@@ -152,6 +153,7 @@ function DeskFilterButton({
 export default function RoomsPage() {
   const queryClient = useQueryClient();
   const { activeOrganization, activeOrganizationId, user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [roomSearch, setRoomSearch] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [selectedDeskId, setSelectedDeskId] = useState<string | null>(null);
@@ -171,9 +173,16 @@ export default function RoomsPage() {
   });
 
   const rooms = useMemo(() => roomsQuery.data?.rooms ?? [], [roomsQuery.data?.rooms]);
+  const requestedRoomId = searchParams.get("room");
 
   useEffect(() => {
     if (!rooms.length) {
+      return;
+    }
+
+    if (requestedRoomId && rooms.some((room) => room.id === requestedRoomId) && requestedRoomId !== selectedRoomId) {
+      setSelectedRoomId(requestedRoomId);
+      setSelectedDeskId(null);
       return;
     }
 
@@ -181,7 +190,7 @@ export default function RoomsPage() {
       setSelectedRoomId(rooms[0].id);
       setSelectedDeskId(null);
     }
-  }, [rooms, selectedRoomId]);
+  }, [requestedRoomId, rooms, selectedRoomId]);
 
   const filteredRooms = useMemo(() => {
     const search = deferredRoomSearch.trim().toLowerCase();
