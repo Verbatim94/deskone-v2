@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LoaderCircle, MessageSquareMore, Send, ShieldAlert, Wrench } from "lucide-react";
+import { LoaderCircle, MessageSquareMore, Send, ShieldAlert, Sparkles, Wrench } from "lucide-react";
 
 import { useAuth } from "@/features/auth/context/useAuth";
 import { createReport, getReports, updateReport, type ReportStatus, type ReportTargetType } from "@/features/reports/api";
@@ -26,6 +26,17 @@ function formatDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function statusBadgeClasses(status: ReportStatus) {
+  switch (status) {
+    case "resolved":
+      return "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
+    case "dismissed":
+      return "bg-slate-200 text-slate-700 hover:bg-slate-200";
+    default:
+      return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+  }
 }
 
 export default function ReportsPage() {
@@ -60,13 +71,13 @@ export default function ReportsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Report submitted.");
+      toast.success("Support item submitted.");
       setComment("");
       setTargetId("");
       void queryClient.invalidateQueries({ queryKey: ["reports", activeOrganizationId] });
     },
     onError: (error) => {
-      const message = error instanceof EdgeClientError ? error.message : "Unable to submit the report.";
+      const message = error instanceof EdgeClientError ? error.message : "Unable to submit the support item.";
       toast.error(message);
     },
   });
@@ -84,57 +95,86 @@ export default function ReportsPage() {
       });
     },
     onSuccess: (_, variables) => {
-      toast.success(`Report marked as ${variables.status}.`);
+      toast.success(`Support item marked as ${variables.status}.`);
       void queryClient.invalidateQueries({ queryKey: ["reports", activeOrganizationId] });
     },
     onError: (error) => {
-      const message = error instanceof EdgeClientError ? error.message : "Unable to update the report.";
+      const message = error instanceof EdgeClientError ? error.message : "Unable to update the support item.";
       toast.error(message);
     },
   });
 
+  const reports = reportsQuery.data?.reports ?? [];
+  const openReports = reports.filter((report) => report.status === "open");
+  const resolvedReports = reports.filter((report) => report.status === "resolved");
+
   if (!activeOrganizationId || !activeOrganization) {
     return (
-      <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+      <Card className="premium-surface rounded-[2.2rem]">
         <CardContent className="p-8 text-sm leading-7 text-slate-600">
-          Reports are organization-scoped. Once your active environment is available, users will be able to leave
-          comments and admins will see the moderation queue here.
+          Support is tied to a specific environment. As soon as an active workspace is available, people will be able
+          to leave comments here and admins will see the live queue.
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.88)_52%,rgba(240,249,255,0.62))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
+    <div className="space-y-8">
+      <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.12fr,0.88fr]">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-sky-700">Support</p>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              Make support feel effortless for people and immediately actionable for workspace operators.
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="playful-chip inline-flex rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700">
+                Support
+              </span>
+              <span className="inline-flex rounded-full border border-white/80 bg-white/70 px-3 py-1 text-xs text-slate-600">
+                {activeOrganization.name}
+              </span>
+            </div>
+            <h1 className="premium-display mt-5 max-w-3xl text-[2.45rem] font-semibold tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.02]">
+              Keep support lightweight for people, visible for operators and calm enough to trust every day.
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Support inside <span className="font-medium text-slate-900">{activeOrganization.name}</span> is meant to
-              be quick: choose the target, leave a clear comment and keep the queue visible to whoever owns the
+              Support inside <span className="font-medium text-slate-900">{activeOrganization.name}</span> should feel
+              fast and low-friction. Pick a target, add a crisp comment and keep the queue readable for whoever owns the
               workspace.
             </p>
           </div>
 
-          <div className="grid gap-3 text-sm text-slate-700">
-            <div className="rounded-[1.4rem] border border-white/70 bg-white/80 p-4 shadow-sm">
-              People can report rooms, desks, offices or leave general feedback without switching tools.
+          <div className="grid gap-3">
+            <div className="rounded-[1.7rem] border border-white/80 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Queue shape</p>
+              <p className="mt-3 text-2xl font-semibold text-slate-950">{openReports.length}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Open items still waiting for review or resolution.</p>
             </div>
-            <div className="rounded-[1.4rem] border border-white/70 bg-white/80 p-4 shadow-sm">
-              Admins see the full workspace queue, while regular users only see their own items.
+            <div className="rounded-[1.7rem] border border-white/80 bg-white/76 p-5 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Resolved</p>
+              <p className="mt-3 text-2xl font-semibold text-slate-950">{resolvedReports.length}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Items already closed and preserved in the timeline.</p>
+            </div>
+            <div className="premium-dark rounded-[1.8rem] border border-slate-900/80 p-5 text-slate-50">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-300">Visibility</p>
+              <p className="mt-3 text-lg font-semibold text-white">
+                {canManageReports ? "Full workspace moderation" : "Personal support stream"}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                {canManageReports
+                  ? "You can triage, resolve and reopen support items for the whole environment."
+                  : "You see only your own items, while operators keep the wider queue under control."}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr,1.05fr]">
-        <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+      <div className="grid gap-6 xl:grid-cols-[0.94fr,1.06fr]">
+        <Card className="premium-surface rounded-[2.2rem]">
           <CardHeader>
-            <CardTitle className="text-xl text-slate-950">New support item</CardTitle>
+            <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
+              <Sparkles className="h-5 w-5 text-sky-700" />
+              New support item
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
@@ -145,7 +185,7 @@ export default function ReportsPage() {
                 id="report-target-type"
                 value={targetType}
                 onChange={(event) => setTargetType(event.target.value as ReportTargetType)}
-                className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-300"
+                className="h-11 rounded-2xl border border-white/80 bg-[linear-gradient(180deg,rgba(244,247,255,0.92),rgba(255,255,255,0.98))] px-3 text-sm text-slate-700 outline-none transition focus:border-sky-300"
               >
                 {Object.entries(targetTypeLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -164,7 +204,7 @@ export default function ReportsPage() {
                 value={targetId}
                 onChange={(event) => setTargetId(event.target.value)}
                 placeholder={targetType === "general" ? "Optional" : "Example: desk-a104 or office-b"}
-                className="rounded-xl border-slate-200"
+                className="rounded-2xl border-white/80 bg-white/85"
               />
             </div>
 
@@ -176,24 +216,24 @@ export default function ReportsPage() {
                 id="report-comment"
                 value={comment}
                 onChange={(event) => setComment(event.target.value)}
-                className="min-h-[160px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-sky-300"
-                placeholder="Describe the issue or request in a few clear lines."
+                className="min-h-[170px] rounded-[1.6rem] border border-white/80 bg-white/85 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-sky-300"
+                placeholder="Describe the issue in a few clear lines. Keep it simple enough for fast triage."
               />
             </div>
 
             <Button
               type="button"
-              className="h-11 rounded-xl bg-slate-950 text-white hover:bg-slate-800"
+              className="h-11 rounded-full bg-slate-950 text-white shadow-[0_24px_42px_-28px_rgba(15,23,42,0.75)] hover:bg-slate-800"
               onClick={() => createReportMutation.mutate()}
               disabled={createReportMutation.isPending}
             >
               <Send className="mr-2 h-4 w-4" />
-              {createReportMutation.isPending ? "Submitting..." : "Submit report"}
+              {createReportMutation.isPending ? "Submitting..." : "Submit support item"}
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+        <Card className="premium-surface rounded-[2.2rem]">
           <CardHeader>
             <CardTitle className="text-xl text-slate-950">
               {canManageReports ? "Workspace queue" : "Your support items"}
@@ -201,22 +241,22 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent className="grid gap-4">
             {reportsQuery.isLoading ? (
-              <div className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-6 text-sm text-slate-600">
+              <div className="rounded-[1.6rem] border border-slate-200/70 bg-white/80 p-6 text-sm text-slate-600">
                 <LoaderCircle className="mb-3 h-5 w-5 animate-spin text-sky-700" />
-                Loading reports...
+                Loading support activity...
               </div>
             ) : null}
 
-            {!reportsQuery.isLoading && !reportsQuery.data?.reports.length ? (
-              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-                No reports yet for this organization.
+            {!reportsQuery.isLoading && !reports.length ? (
+              <div className="rounded-[1.6rem] border border-dashed border-slate-300 bg-white/70 p-6 text-sm text-slate-500">
+                No support items yet for this environment.
               </div>
             ) : null}
 
-            {reportsQuery.data?.reports.map((report) => (
+            {reports.map((report) => (
               <article
                 key={report.id}
-                className="rounded-[1.5rem] border border-slate-200/70 bg-slate-50 p-5"
+                className="rounded-[1.65rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(244,247,255,0.9))] p-5 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.14)]"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 text-slate-950">
@@ -226,7 +266,7 @@ export default function ReportsPage() {
                       {report.targetId ? ` · ${report.targetId}` : ""}
                     </span>
                   </div>
-                  <span className="rounded-full bg-slate-950 px-3 py-1 text-xs font-medium text-white">
+                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClasses(report.status)}`}>
                     {report.status}
                   </span>
                 </div>
@@ -256,7 +296,7 @@ export default function ReportsPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="rounded-xl border-slate-200 bg-white"
+                      className="rounded-full border-white/80 bg-white/85"
                       onClick={() => updateReportMutation.mutate({ reportId: report.id, status: "resolved" })}
                       disabled={updateReportMutation.isPending || report.status === "resolved"}
                     >
@@ -265,7 +305,7 @@ export default function ReportsPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="rounded-xl border-slate-200 bg-white"
+                      className="rounded-full border-white/80 bg-white/85"
                       onClick={() => updateReportMutation.mutate({ reportId: report.id, status: "dismissed" })}
                       disabled={updateReportMutation.isPending || report.status === "dismissed"}
                     >
@@ -274,7 +314,7 @@ export default function ReportsPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="rounded-xl border-slate-200 bg-white"
+                      className="rounded-full border-white/80 bg-white/85"
                       onClick={() => updateReportMutation.mutate({ reportId: report.id, status: "open" })}
                       disabled={updateReportMutation.isPending || report.status === "open"}
                     >

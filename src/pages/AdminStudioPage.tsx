@@ -270,7 +270,7 @@ function StudioMetricCard({
   description: string;
 }) {
   return (
-    <Card className="rounded-[1.6rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+    <Card className="premium-surface rounded-[1.8rem]">
       <CardContent className="p-5">
         <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{title}</p>
         <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{value}</p>
@@ -858,9 +858,9 @@ export default function AdminStudioPage() {
   if (!hasOrganizationScope) {
     return (
       <div className="space-y-6">
-        <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.9)_50%,rgba(224,242,254,0.64))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
-          <p className="text-xs uppercase tracking-[0.28em] text-sky-700">Admin studio</p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+        <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
+          <p className="playful-chip inline-flex rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700">Workspace admin</p>
+          <h1 className="premium-display mt-4 text-[2.45rem] font-semibold tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.02]">
             Pick an organization to start designing rooms and managing shared access.
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
@@ -874,9 +874,9 @@ export default function AdminStudioPage() {
   if (!hasAdminScope) {
     return (
       <div className="space-y-6">
-        <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.9)_50%,rgba(254,243,199,0.42))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
-          <p className="text-xs uppercase tracking-[0.28em] text-amber-700">Admin studio</p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+        <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
+          <p className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-amber-700">Workspace admin</p>
+          <h1 className="premium-display mt-4 text-[2.45rem] font-semibold tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.02]">
             This organization is in read-only mode for your current scope.
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
@@ -889,27 +889,32 @@ export default function AdminStudioPage() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(248,250,252,0.9)_48%,rgba(224,242,254,0.68))] p-6 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
+      <section className="premium-surface overflow-hidden rounded-[3rem] p-6 sm:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-sky-700">Organization admin studio</p>
-              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Design rooms, govern sharing groups and keep access scoped to {activeOrganization?.name ?? "your environment"}.
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="playful-chip inline-flex rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-sky-700">Workspace admin</span>
+              <span className="inline-flex rounded-full border border-white/80 bg-white/70 px-3 py-1 text-xs text-slate-600">
+                {activeOrganization?.name ?? "No environment"}
+              </span>
+            </div>
+            <h1 className="premium-display mt-4 text-[2.45rem] font-semibold tracking-tight text-slate-950 sm:text-[4rem] sm:leading-[1.02]">
+              Shape rooms, govern sharing groups and keep access beautifully scoped to {activeOrganization?.name ?? "your environment"}.
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              This is the real admin workspace for the `v2`: room creation is visual, access is group-first, and every
-              mutation passes through typed APIs and audited Edge Functions.
+              This is the creative operations surface of Deskone: visual room design, group-first access and layout
+              edits that still feel precise enough for serious workspace governance.
             </p>
           </div>
 
           <div className="grid gap-3 text-sm text-slate-700">
-              <div className="rounded-[1.4rem] border border-white/70 bg-white/85 p-4 shadow-sm">
+            <div className="rounded-[1.6rem] border border-white/80 bg-white/76 p-4 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
               Organization admins only operate inside their active environment.
             </div>
-              <div className="rounded-[1.4rem] border border-white/70 bg-white/85 p-4 shadow-sm">
+            <div className="rounded-[1.6rem] border border-white/80 bg-white/76 p-4 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
               Sharing groups accelerate large rollouts without duplicating room access one user at a time.
             </div>
-              <div className="rounded-[1.4rem] border border-white/70 bg-white/85 p-4 shadow-sm">
+            <div className="premium-dark rounded-[1.7rem] border border-slate-900/80 p-4 text-slate-50">
               The designer writes typed desks, zones and scoped memberships instead of opaque blobs.
             </div>
           </div>
@@ -935,21 +940,21 @@ export default function AdminStudioPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as StudioTab)} className="space-y-6">
-        <TabsList className="h-auto rounded-2xl bg-white/85 p-2 shadow-sm">
-          <TabsTrigger value="rooms" className="rounded-xl px-4 py-2.5">
+        <TabsList className="h-auto rounded-[1.8rem] border border-white/80 bg-white/76 p-2 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
+          <TabsTrigger value="rooms" className="rounded-[1.2rem] px-4 py-2.5">
             Rooms
           </TabsTrigger>
-          <TabsTrigger value="groups" className="rounded-xl px-4 py-2.5">
+          <TabsTrigger value="groups" className="rounded-[1.2rem] px-4 py-2.5">
             Sharing groups
           </TabsTrigger>
-          <TabsTrigger value="designer" className="rounded-xl px-4 py-2.5">
+          <TabsTrigger value="designer" className="rounded-[1.2rem] px-4 py-2.5">
             Designer
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="rooms" className="space-y-6">
           <div className="grid gap-6 xl:grid-cols-[0.92fr,1.08fr]">
-            <Card className="rounded-[2rem] border-slate-200/80 bg-white/90 shadow-[0_20px_60px_-48px_rgba(15,23,42,0.6)]">
+            <Card className="premium-surface rounded-[2.2rem]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl text-slate-950">
                   <Building2 className="h-5 w-5 text-sky-700" />
