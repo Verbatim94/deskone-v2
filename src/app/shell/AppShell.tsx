@@ -15,7 +15,7 @@ import {
   UserCog,
 } from "lucide-react";
 
-import deskoneWordmark from "@/assets/deskone-wordmark-transparent-clean.png";
+import deskoneWordmark from "@/assets/deskone-wordmark-transparent-keyed.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -103,7 +103,7 @@ export function AppShell() {
                 <img
                   src={deskoneWordmark}
                   alt="Deskone"
-                  className="h-14 w-auto object-contain sm:h-16"
+                  className="h-14 w-auto object-contain mix-blend-multiply sm:h-16"
                 />
               </NavLink>
 
