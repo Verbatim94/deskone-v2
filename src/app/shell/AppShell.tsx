@@ -1,13 +1,17 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
+  CalendarDays,
   DoorClosed,
   Home,
+  LineChart,
   LayoutGrid,
   LifeBuoy,
   LogOut,
   NotebookTabs,
+  ShieldCheck,
   Settings2,
   Shield,
+  SquareCheckBig,
 } from "lucide-react";
 
 import deskoneLogo from "@/assets/deskone-logo.png";
@@ -19,12 +23,17 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { to: "/", label: "Home", icon: Home, end: true },
-  { to: "/rooms", label: "Rooms", icon: LayoutGrid },
-  { to: "/my-bookings", label: "My bookings", icon: NotebookTabs },
+  { to: "/calendar", label: "Calendar", icon: CalendarDays },
+  { to: "/shared-rooms", label: "Shared Rooms", icon: LayoutGrid },
+  { to: "/my-bookings", label: "My Reservations", icon: NotebookTabs },
   { to: "/offices", label: "Offices", icon: DoorClosed },
   { to: "/reports", label: "Support", icon: LifeBuoy },
+  { to: "/planner", label: "Planner", icon: CalendarDays, minimumRole: "admin" as AppRole },
+  { to: "/approvals", label: "Approvals", icon: SquareCheckBig, minimumRole: "admin" as AppRole },
+  { to: "/insight", label: "Insight", icon: LineChart, minimumRole: "admin" as AppRole },
+  { to: "/users", label: "Users", icon: ShieldCheck, minimumRole: "super_admin" as AppRole },
   { to: "/super-admin", label: "Platform", icon: Shield, minimumRole: "super_admin" as AppRole },
-  { to: "/admin-studio", label: "Workspace Admin", icon: Settings2, minimumRole: "admin" as AppRole },
+  { to: "/admin-studio", label: "Rooms Admin", icon: Settings2, minimumRole: "admin" as AppRole },
 ] as const;
 
 const roleRank: Record<AppRole, number> = {
