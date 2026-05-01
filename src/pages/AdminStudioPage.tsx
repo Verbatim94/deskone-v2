@@ -57,6 +57,16 @@ type CanvasSelection =
   | { kind: "zone"; id: string }
   | null;
 
+type CanvasDragState = {
+  kind: "desk" | "zone";
+  id: string;
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  originX: number;
+  originY: number;
+};
+
 type ScopedSelection = Record<
   string,
   {
@@ -235,6 +245,10 @@ function nextZoneName(zones: StudioRoomZone[]) {
 function normalizeNumericInput(value: string, fallback: number) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function clampToGrid(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function ensureAmenityInCatalog(catalog: StudioAmenity[], amenityName: string) {
@@ -422,6 +436,7 @@ export default function AdminStudioPage() {
   const [draftAmenityName, setDraftAmenityName] = useState("");
   const [roomSearch, setRoomSearch] = useState("");
   const [groupSearch, setGroupSearch] = useState("");
+  const [dragState, setDragState] = useState<CanvasDragState | null>(null);
 
   const deferredRoomSearch = useDeferredValue(roomSearch);
   const deferredGroupSearch = useDeferredValue(groupSearch);
@@ -563,6 +578,21 @@ export default function AdminStudioPage() {
       setCanvasSelection(null);
     }
   }, [canvasSelection, layoutEditorState]);
+
+  useEffect(() => {
+    if (!dragState || !layoutEditorState) {
+      return;
+    }
+
+    const deskStillExists =
+      dragState.kind !== "desk" || layoutEditorState.desks.some((desk) => desk.id === dragState.id);
+    const zoneStillExists =
+      dragState.kind !== "zone" || layoutEditorState.zones.some((zone) => zone.id === dragState.id);
+
+    if (!deskStillExists || !zoneStillExists) {
+      setDragState(null);
+    }
+  }, [dragState, layoutEditorState]);
 
   const roomCreateMutation = useMutation({
     mutationFn: async () =>
@@ -799,6 +829,125 @@ export default function AdminStudioPage() {
       };
     });
     setCanvasSelection(null);
+  }
+
+  function beginCanvasDrag(
+    event: React.PointerEvent<HTMLButtonElement>,
+    selection: Exclude<CanvasSelection, null>,
+  ) {
+    if (!layoutEditorState) {
+      return;
+    }
+
+    const item =
+      selection.kind === "desk"
+        ? layoutEditorState.desks.find((desk) => desk.id === selection.id)
+        : layoutEditorState.zones.find((zone) => zone.id === selection.id);
+
+    if (!item) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setCanvasSelection(selection);
+    setDragState({
+      kind: selection.kind,
+      id: selection.id,
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      originX: item.x,
+      originY: item.y,
+    });
+  }
+
+  function handleCanvasPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!dragState || !layoutEditorState) {
+      return;
+    }
+
+    const deltaX = Math.round((event.clientX - dragState.startClientX) / GRID_CELL_SIZE);
+    const deltaY = Math.round((event.clientY - dragState.startClientY) / GRID_CELL_SIZE);
+
+    if (deltaX === 0 && deltaY === 0) {
+      return;
+    }
+
+    if (dragState.kind === "desk") {
+      const desk = layoutEditorState.desks.find((entry) => entry.id === dragState.id);
+
+      if (!desk) {
+        return;
+      }
+
+      const nextX = clampToGrid(
+        dragState.originX + deltaX,
+        0,
+        Math.max(layoutEditorState.room.gridWidth - desk.width, 0),
+      );
+      const nextY = clampToGrid(
+        dragState.originY + deltaY,
+        0,
+        Math.max(layoutEditorState.room.gridHeight - desk.height, 0),
+      );
+
+      if (desk.x === nextX && desk.y === nextY) {
+        return;
+      }
+
+      updateDesk(dragState.id, (currentDesk) => ({
+        ...currentDesk,
+        x: nextX,
+        y: nextY,
+      }));
+
+      return;
+    }
+
+    const zone = layoutEditorState.zones.find((entry) => entry.id === dragState.id);
+
+    if (!zone) {
+      return;
+    }
+
+    const nextX = clampToGrid(
+      dragState.originX + deltaX,
+      0,
+      Math.max(layoutEditorState.room.gridWidth - zone.width, 0),
+    );
+    const nextY = clampToGrid(
+      dragState.originY + deltaY,
+      0,
+      Math.max(layoutEditorState.room.gridHeight - zone.height, 0),
+    );
+
+    if (zone.x === nextX && zone.y === nextY) {
+      return;
+    }
+
+    updateZone(dragState.id, (currentZone) => ({
+      ...currentZone,
+      x: nextX,
+      y: nextY,
+    }));
+  }
+
+  function endCanvasDrag(event?: React.PointerEvent<HTMLElement>) {
+    if (event && dragState && event.pointerId !== dragState.pointerId) {
+      return;
+    }
+
+    if (event?.currentTarget && "releasePointerCapture" in event.currentTarget) {
+      try {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      } catch {
+        // Ignore pointer release issues if the capture already ended.
+      }
+    }
+
+    setDragState(null);
   }
 
   function toggleGroupFormMember(formKey: "create" | "edit", userId: string, enabled: boolean) {
@@ -1820,6 +1969,9 @@ export default function AdminStudioPage() {
                             width: canvasDimensions.width,
                             height: canvasDimensions.height,
                           }}
+                          onPointerMove={handleCanvasPointerMove}
+                          onPointerUp={endCanvasDrag}
+                          onPointerCancel={endCanvasDrag}
                         >
                         <div className="absolute inset-x-5 top-5 rounded-[1.6rem] border border-slate-200/80 bg-white/90 px-4 py-3 text-sm text-slate-500 shadow-sm">
                           Active groups:
@@ -1841,8 +1993,12 @@ export default function AdminStudioPage() {
                             key={zone.id}
                             type="button"
                             onClick={() => setCanvasSelection({ kind: "zone", id: zone.id })}
+                            onPointerDown={(event) => beginCanvasDrag(event, { kind: "zone", id: zone.id })}
+                            onPointerUp={endCanvasDrag}
+                            onPointerCancel={endCanvasDrag}
                             className={cn(
                               "absolute rounded-[1.6rem] border-2 border-dashed bg-white/55 px-4 py-3 text-left shadow-sm transition-shadow",
+                              dragState?.kind === "zone" && dragState.id === zone.id ? "cursor-grabbing" : "cursor-grab",
                               canvasSelection?.kind === "zone" && canvasSelection.id === zone.id
                                 ? "border-indigo-400 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]"
                                 : "border-slate-300",
@@ -1866,8 +2022,12 @@ export default function AdminStudioPage() {
                             key={desk.id}
                             type="button"
                             onClick={() => setCanvasSelection({ kind: "desk", id: desk.id })}
+                            onPointerDown={(event) => beginCanvasDrag(event, { kind: "desk", id: desk.id })}
+                            onPointerUp={endCanvasDrag}
+                            onPointerCancel={endCanvasDrag}
                             className={cn(
                               "absolute flex items-center justify-center rounded-xl border-2 text-xs font-semibold shadow-sm transition-all",
+                              dragState?.kind === "desk" && dragState.id === desk.id ? "cursor-grabbing" : "cursor-grab",
                               desk.defaultStatus === "available"
                                 ? "border-cyan-600 bg-white text-cyan-700"
                                 : "border-slate-300 bg-slate-100 text-slate-400",
@@ -1998,6 +2158,37 @@ export default function AdminStudioPage() {
                         </div>
                       </div>
 
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-2">
+                          <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Rotation</span>
+                          <Input
+                            type="number"
+                            value={selectedDesk.rotationDegrees}
+                            onChange={(event) =>
+                              updateDesk(selectedDesk.id, (desk) => ({
+                                ...desk,
+                                rotationDegrees: Number(event.target.value) || 0,
+                              }))
+                            }
+                            className="rounded-xl border-slate-200"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Layer order</span>
+                          <Input
+                            type="number"
+                            value={selectedDesk.zIndex}
+                            onChange={(event) =>
+                              updateDesk(selectedDesk.id, (desk) => ({
+                                ...desk,
+                                zIndex: Number(event.target.value) || 0,
+                              }))
+                            }
+                            className="rounded-xl border-slate-200"
+                          />
+                        </div>
+                      </div>
+
                       <div className="grid gap-2">
                         <span className="text-xs uppercase tracking-[0.18em] text-slate-500">Amenities</span>
                         <div className="flex flex-wrap gap-2">
@@ -2053,6 +2244,11 @@ export default function AdminStudioPage() {
                           This workstation inherits room-level user and group scope, with desk attributes preserved as
                           structured data.
                         </p>
+                      </div>
+
+                      <div className="rounded-[1.4rem] border border-cyan-200/80 bg-cyan-50 p-4 text-sm text-cyan-900">
+                        Drag the workstation directly on the canvas to move it. Use the inspector when you need precise
+                        geometry or fine-tuning.
                       </div>
 
                       <Button
