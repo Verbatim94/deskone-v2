@@ -64,21 +64,21 @@ export function AppShell() {
   return (
     <div className="min-h-screen text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[1640px] px-4 py-4 sm:px-6 lg:px-10">
-        <header className="border-b border-white/70 bg-white/45 backdrop-blur-xl">
+        <header className="border-b border-sky-100/80 bg-white/72 backdrop-blur-xl">
           <div className="flex flex-col gap-4 px-2 py-4 lg:px-1">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="flex items-center">
                 <img
                   src={deskoneLogo}
                   alt="Deskone"
-                  className="h-12 w-12 rounded-[1rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(237,245,255,0.96))] object-contain p-2 shadow-[0_18px_32px_-22px_rgba(55,107,255,0.28)]"
+                  className="h-12 w-12 rounded-[1rem] border border-white bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(241,247,255,0.98))] object-contain p-2 shadow-[0_18px_32px_-22px_rgba(55,107,255,0.2)]"
                 />
               </div>
 
               <div className="flex flex-col gap-3 xl:items-end">
                 <div className="flex flex-wrap items-center gap-3">
                   <select
-                    className="h-10 min-w-[220px] rounded-full border border-white/85 bg-white/60 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
+                    className="h-10 min-w-[220px] rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-300"
                     value={activeOrganizationId ?? ""}
                     onChange={(event) => setActiveOrganizationId(event.target.value)}
                     disabled={!organizations.length}
@@ -91,7 +91,7 @@ export function AppShell() {
                     ))}
                   </select>
 
-                  <div className="flex items-center gap-3 rounded-full border border-white/85 bg-white/60 px-4 py-2 text-sm text-slate-700">
+                  <div className="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-[0_12px_24px_-18px_rgba(55,107,255,0.14)]">
                     <div className="min-w-0 leading-tight">
                       <p className="truncate text-[15px] font-semibold text-slate-950">
                         {user?.displayName ?? user?.fullName ?? "Unknown user"}
@@ -110,7 +110,7 @@ export function AppShell() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-9 rounded-full border-white/80 bg-white/55 px-4 text-slate-700 hover:bg-white hover:text-slate-950"
+                    className="h-9 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50 hover:text-slate-950"
                     onClick={() => void revokeAllSessions()}
                   >
                     Revoke all sessions
@@ -127,7 +127,7 @@ export function AppShell() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-4 border-t border-white/70 pt-4">
+            <div className="flex items-center justify-between gap-4 border-t border-sky-100/80 pt-4">
               <nav className="flex flex-wrap gap-2">
                 {visibleNavigation.map((item) => (
                   <NavLink
@@ -138,8 +138,8 @@ export function AppShell() {
                       cn(
                         "rounded-full border px-4 py-2.5 text-sm font-medium transition-all",
                         isActive
-                          ? "border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(235,244,255,0.96))] text-sky-800 shadow-[0_18px_34px_-24px_rgba(55,107,255,0.46)]"
-                          : "border-transparent bg-transparent text-slate-600 hover:border-white/70 hover:bg-white/65 hover:text-slate-950",
+                          ? "border-sky-100 bg-[linear-gradient(180deg,rgba(255,255,255,1),rgba(240,247,255,0.98))] text-sky-800 shadow-[0_16px_30px_-24px_rgba(55,107,255,0.28)]"
+                          : "border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-white hover:text-slate-950",
                       )
                     }
                   >
