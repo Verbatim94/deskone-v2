@@ -3,7 +3,6 @@ import {
   CalendarDays,
   ChevronDown,
   DoorClosed,
-  Home,
   LayoutGrid,
   LifeBuoy,
   LineChart,
@@ -16,12 +15,13 @@ import {
   UserCog,
 } from "lucide-react";
 
-import deskoneWordmark from "@/assets/deskone-wordmark.png";
+import deskoneWordmark from "@/assets/deskone-wordmark-transparent.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -31,16 +31,21 @@ import { useAuth } from "@/features/auth/context/useAuth";
 import type { AppRole } from "@/features/auth/types";
 import { cn } from "@/lib/utils";
 
-const navigation = [
-  { to: "/", label: "Home", icon: Home, end: true },
+const primaryNavigation = [
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/shared-rooms", label: "Shared Rooms", icon: LayoutGrid },
   { to: "/my-bookings", label: "My Reservations", icon: NotebookTabs },
   { to: "/offices", label: "Offices", icon: DoorClosed },
   { to: "/reports", label: "Support", icon: LifeBuoy },
+] as const;
+
+const operationsNavigation = [
   { to: "/planner", label: "Planner", icon: CalendarDays, minimumRole: "admin" as AppRole },
   { to: "/approvals", label: "Approvals", icon: SquareCheckBig, minimumRole: "admin" as AppRole },
   { to: "/insight", label: "Insight", icon: LineChart, minimumRole: "admin" as AppRole },
+] as const;
+
+const adminNavigation = [
   { to: "/users", label: "Users", icon: ShieldCheck, minimumRole: "super_admin" as AppRole },
   { to: "/super-admin", label: "Platform", icon: Shield, minimumRole: "super_admin" as AppRole },
   { to: "/admin-studio", label: "Rooms Admin", icon: Settings2, minimumRole: "admin" as AppRole },
@@ -56,7 +61,31 @@ export function AppShell() {
   const { user, logout, revokeAllSessions, organizations, activeOrganizationId, setActiveOrganizationId } =
     useAuth();
 
-  const visibleNavigation = navigation.filter((item) => {
+  const isVisible = (minimumRole?: AppRole) => {
+    if (!minimumRole || !user) {
+      return true;
+    }
+
+    return roleRank[user.role] >= roleRank[minimumRole];
+  };
+
+  const visiblePrimaryNavigation = primaryNavigation.filter((item) => {
+    if (!item.minimumRole || !user) {
+      return true;
+    }
+
+    return roleRank[user.role] >= roleRank[item.minimumRole];
+  });
+
+  const visibleOperationsNavigation = operationsNavigation.filter((item) => {
+    if (!item.minimumRole || !user) {
+      return true;
+    }
+
+    return roleRank[user.role] >= roleRank[item.minimumRole];
+  });
+
+  const visibleAdminNavigation = adminNavigation.filter((item) => {
     if (!item.minimumRole || !user) {
       return true;
     }
@@ -70,18 +99,19 @@ export function AppShell() {
         <header className="border-b border-sky-100/80 bg-white/72 backdrop-blur-xl">
           <div className="flex flex-col gap-4 px-1 py-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 flex-1 items-center gap-6">
-              <img
-                src={deskoneWordmark}
-                alt="Deskone"
-                className="h-14 w-auto shrink-0 object-contain sm:h-16"
-              />
+              <NavLink to="/" end className="shrink-0">
+                <img
+                  src={deskoneWordmark}
+                  alt="Deskone"
+                  className="h-14 w-auto object-contain sm:h-16"
+                />
+              </NavLink>
 
               <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-2">
-                {visibleNavigation.map((item) => (
+                {visiblePrimaryNavigation.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    end={item.end}
                     className={({ isActive }) =>
                       cn(
                         "rounded-full px-4 py-2.5 text-sm font-medium transition-all",
@@ -97,6 +127,58 @@ export function AppShell() {
                     </span>
                   </NavLink>
                 ))}
+
+                {visibleOperationsNavigation.length ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
+                        Operations
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      className="w-56 rounded-[1.25rem] border border-slate-200/80 bg-white/96 p-2 shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
+                    >
+                      <DropdownMenuGroup>
+                        {visibleOperationsNavigation.map((item) => (
+                          <DropdownMenuItem key={item.to} asChild className="rounded-xl px-3 py-2.5">
+                            <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
+                              <item.icon className="h-4 w-4" />
+                              {item.label}
+                            </NavLink>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
+
+                {visibleAdminNavigation.length ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
+                        Admin
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      className="w-56 rounded-[1.25rem] border border-slate-200/80 bg-white/96 p-2 shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
+                    >
+                      <DropdownMenuGroup>
+                        {visibleAdminNavigation.map((item) => (
+                          <DropdownMenuItem key={item.to} asChild className="rounded-xl px-3 py-2.5">
+                            <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
+                              <item.icon className="h-4 w-4" />
+                              {item.label}
+                            </NavLink>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
               </nav>
             </div>
 
@@ -156,6 +238,30 @@ export function AppShell() {
                   <DropdownMenuSeparator className="bg-slate-100" />
 
                   <div className="space-y-1 p-1">
+                    {isVisible("super_admin") ? (
+                      <>
+                        <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950">
+                          <NavLink to="/users" className="flex items-center gap-2.5">
+                            <ShieldCheck className="h-4 w-4" />
+                            Users
+                          </NavLink>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950">
+                          <NavLink to="/super-admin" className="flex items-center gap-2.5">
+                            <Shield className="h-4 w-4" />
+                            Platform
+                          </NavLink>
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
+                    {isVisible("admin") ? (
+                      <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950">
+                        <NavLink to="/admin-studio" className="flex items-center gap-2.5">
+                          <Settings2 className="h-4 w-4" />
+                          Rooms Admin
+                        </NavLink>
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem
                       className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950"
                       onSelect={() => void revokeAllSessions()}
