@@ -148,6 +148,7 @@ export default function HomePage() {
   const roomReservations = scheduleQuery.data?.roomReservations ?? [];
   const officeBookings = scheduleQuery.data?.officeBookings ?? [];
   const calendarDaysData = dashboardCalendarQuery.data?.days ?? [];
+  const isDashboardCalendarUnavailable = dashboardCalendarQuery.isError;
   const openReports = reports.filter((report) => report.status === "open");
   const nextDeskReservation = roomReservations[0] ?? null;
   const nextOfficeBooking = officeBookings[0] ?? null;
@@ -457,6 +458,11 @@ export default function HomePage() {
                 </TooltipProvider>
 
                 <div className="rounded-[1.4rem] bg-slate-50/90 p-4">
+                  {isDashboardCalendarUnavailable ? (
+                    <p className="mb-3 text-sm text-slate-500">
+                      Calendar markers are temporarily unavailable, but you can still open your reservations.
+                    </p>
+                  ) : null}
                   <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
                     <div className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full bg-violet-500" />
