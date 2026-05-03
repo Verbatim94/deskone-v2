@@ -16,6 +16,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth/context/useAuth";
 import { getOfficesOverview } from "@/features/offices/api";
 import { getReports } from "@/features/reports/api";
@@ -53,6 +54,26 @@ function formatDateTime(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function buildCalendarTooltip(input: { hasUserBooking: boolean; fullyBooked: boolean; bookingRoomNames: string[] }) {
+  if (input.hasUserBooking) {
+    if (input.bookingRoomNames.length === 1) {
+      return `Booked in ${input.bookingRoomNames[0]}`;
+    }
+
+    if (input.bookingRoomNames.length > 1) {
+      return `Booked in ${input.bookingRoomNames.slice(0, 2).join(", ")}`;
+    }
+
+    return "You already have a desk booking";
+  }
+
+  if (input.fullyBooked) {
+    return "All accessible desks are occupied";
+  }
+
+  return "Open My Reservations";
 }
 
 function getInitials(name: string | null | undefined) {
@@ -389,36 +410,51 @@ export default function HomePage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-2">
-                  {miniCalendarDays.map((day) => {
-                    const isoDate = format(day, "yyyy-MM-dd");
-                    const state = calendarDayState.get(isoDate);
-                    const isCurrentMonth = isSameMonth(day, calendarMonth);
-                    const isCurrentDay = isToday(day);
+                <TooltipProvider delayDuration={120}>
+                  <div className="grid grid-cols-7 gap-2">
+                    {miniCalendarDays.map((day) => {
+                      const isoDate = format(day, "yyyy-MM-dd");
+                      const state = calendarDayState.get(isoDate) ?? {
+                        hasUserBooking: false,
+                        fullyBooked: false,
+                        bookingRoomNames: [],
+                      };
+                      const isCurrentMonth = isSameMonth(day, calendarMonth);
+                      const isCurrentDay = isToday(day);
 
-                    return (
-                      <div
-                        key={isoDate}
-                        className={cn(
-                          "flex min-h-[50px] flex-col items-center justify-start rounded-[1.1rem] px-2 py-2 text-sm transition",
-                          isCurrentMonth ? "bg-slate-50/90 text-slate-900" : "bg-transparent text-slate-300",
-                          isCurrentDay && "ring-2 ring-violet-400/70 ring-offset-0",
-                        )}
-                      >
-                        <span className={cn("font-medium", isCurrentDay && isCurrentMonth && "text-violet-700")}>
-                          {format(day, "d")}
-                        </span>
-                        <span className="mt-2 flex h-2.5 items-center justify-center">
-                          {state?.hasUserBooking ? (
-                            <span className="h-2.5 w-2.5 rounded-full bg-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.14)]" />
-                          ) : state?.fullyBooked ? (
-                            <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shadow-[0_0_0_4px_rgba(244,63,94,0.14)]" />
-                          ) : null}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                      return (
+                        <Tooltip key={isoDate}>
+                          <TooltipTrigger asChild>
+                            <Link
+                              to={`/my-bookings?date=${isoDate}`}
+                              className={cn(
+                                "flex min-h-[52px] flex-col items-center justify-start rounded-[1.1rem] px-2 py-2 text-sm transition",
+                                isCurrentMonth ? "bg-slate-50/90 text-slate-900 hover:bg-white" : "bg-transparent text-slate-300 hover:bg-white/50",
+                                isCurrentDay && "ring-2 ring-violet-400/70 ring-offset-0",
+                              )}
+                            >
+                              <span className={cn("font-medium", isCurrentDay && isCurrentMonth && "text-violet-700")}>
+                                {format(day, "d")}
+                              </span>
+                              <span className="mt-2 flex h-2.5 items-center justify-center">
+                                {state.hasUserBooking ? (
+                                  <span className="h-2.5 w-2.5 rounded-full bg-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.14)]" />
+                                ) : state.fullyBooked ? (
+                                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shadow-[0_0_0_4px_rgba(244,63,94,0.14)]" />
+                                ) : (
+                                  <span className="h-1.5 w-1.5 rounded-full bg-slate-200/0" />
+                                )}
+                              </span>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent className="rounded-xl border-white/80 bg-white/96 px-3 py-2 text-sm text-slate-700 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.2)]">
+                            {buildCalendarTooltip(state)}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
+                  </div>
+                </TooltipProvider>
 
                 <div className="rounded-[1.4rem] bg-slate-50/90 p-4">
                   <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">

@@ -105,7 +105,7 @@ Deno.serve((req) =>
         .in("room_id", roomIds),
       supabase
         .from("reservations")
-        .select("desk_id, user_id, time_segment, date_start, date_end, status")
+        .select("desk_id, room_id, user_id, time_segment, date_start, date_end, status")
         .in("room_id", roomIds)
         .lte("date_start", toDate)
         .gte("date_end", fromDate)
@@ -163,6 +163,7 @@ Deno.serve((req) =>
 
     const occupancyByDate = new Map<string, SegmentOccupancy>();
     const userBookingDates = new Set<string>();
+    const userBookingRoomIdsByDate = new Map<string, Set<string>>();
 
     for (const assignment of assignments ?? []) {
       const deskId = assignment.desk_id as string;
@@ -214,9 +215,34 @@ Deno.serve((req) =>
 
         if (isOwnReservation) {
           userBookingDates.add(date);
+          const roomIds = userBookingRoomIdsByDate.get(date) ?? new Set<string>();
+          if (reservation.room_id) {
+            roomIds.add(reservation.room_id as string);
+          }
+          userBookingRoomIdsByDate.set(date, roomIds);
         }
       }
     }
+
+    const roomIdsForLabels = Array.from(
+      new Set(
+        Array.from(userBookingRoomIdsByDate.values()).flatMap((roomIds) => Array.from(roomIds)),
+      ),
+    );
+
+    const { data: rooms, error: roomsError } = roomIdsForLabels.length
+      ? await supabase
+          .from("rooms")
+          .select("id, name")
+          .eq("organization_id", organizationId)
+          .in("id", roomIdsForLabels)
+      : { data: [], error: null };
+
+    if (roomsError) {
+      throw new HttpError(500, "internal_error", "Failed to resolve room labels.", roomsError.message);
+    }
+
+    const roomNameById = new Map((rooms ?? []).map((room) => [room.id as string, room.name as string]));
 
     return jsonResponse(req, {
       organization,
@@ -235,6 +261,9 @@ Deno.serve((req) =>
           date,
           hasUserBooking: userBookingDates.has(date),
           fullyBooked: fullyBooked && !userBookingDates.has(date),
+          bookingRoomNames: Array.from(userBookingRoomIdsByDate.get(date) ?? [])
+            .map((roomId) => roomNameById.get(roomId))
+            .filter((roomName): roomName is string => Boolean(roomName)),
         };
       }),
     });

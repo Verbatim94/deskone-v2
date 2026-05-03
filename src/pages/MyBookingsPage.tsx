@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Circle, DoorClosed, LayoutGrid, Loader2 } from "lucide-react";
 import { eachDayOfInterval, endOfMonth, format, isSameMonth, isToday, parseISO, startOfMonth } from "date-fns";
 
@@ -31,6 +32,8 @@ function formatDateTime(value: string) {
 
 export default function MyBookingsPage() {
   const { activeOrganization, activeOrganizationId } = useAuth();
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get("date");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -50,6 +53,20 @@ export default function MyBookingsPage() {
 
   const roomReservations = scheduleQuery.data?.roomReservations ?? [];
   const officeBookings = scheduleQuery.data?.officeBookings ?? [];
+
+  useEffect(() => {
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      return;
+    }
+
+    const parsedDay = parseISO(dateParam);
+    if (Number.isNaN(parsedDay.getTime())) {
+      return;
+    }
+
+    setCurrentMonth(new Date(parsedDay.getFullYear(), parsedDay.getMonth(), 1));
+    setSelectedDay(parsedDay);
+  }, [dateParam]);
 
   const allDays = useMemo(() => {
     const monthDays = eachDayOfInterval({ start: range.monthStart, end: range.monthEnd });
@@ -100,6 +117,15 @@ export default function MyBookingsPage() {
   };
 
   const selectedDayItems = selectedDay ? getDayItems(selectedDay) : { roomItems: [], officeItems: [] };
+
+  useEffect(() => {
+    if (!selectedDay) {
+      return;
+    }
+
+    const { roomItems, officeItems } = getDayItems(selectedDay);
+    setIsDialogOpen(roomItems.length > 0 || officeItems.length > 0);
+  }, [selectedDay, roomReservations, officeBookings]);
 
   if (scheduleQuery.isLoading) {
     return (

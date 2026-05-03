@@ -48,6 +48,7 @@ export type DashboardCalendarDay = {
   date: string;
   hasUserBooking: boolean;
   fullyBooked: boolean;
+  bookingRoomNames: string[];
 };
 
 export type DashboardCalendarResponse = {
