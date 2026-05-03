@@ -15,7 +15,7 @@ import {
   UserCog,
 } from "lucide-react";
 
-import deskoneWordmark from "@/assets/deskone-wordmark-transparent-keyed.png";
+import deskoneWordmark from "@/assets/deskone-wordmark-transparent-clean.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,21 +100,17 @@ export function AppShell() {
           <div className="flex flex-col gap-4 px-1 py-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 flex-1 items-center gap-6">
               <NavLink to="/" end className="shrink-0">
-                <img
-                  src={deskoneWordmark}
-                  alt="Deskone"
-                  className="h-14 w-auto object-contain mix-blend-multiply sm:h-16"
-                />
+                <img src={deskoneWordmark} alt="Deskone" className="h-12 w-auto object-contain sm:h-14" />
               </NavLink>
 
-              <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-2">
+              <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto pb-1">
                 {visiblePrimaryNavigation.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
                     className={({ isActive }) =>
                       cn(
-                        "rounded-full px-4 py-2.5 text-sm font-medium transition-all",
+                        "shrink-0 rounded-full px-3.5 py-2.5 text-sm font-medium transition-all",
                         isActive
                           ? "bg-white text-slate-950 shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)]"
                           : "text-slate-600 hover:bg-white/80 hover:text-slate-950",
@@ -131,7 +127,7 @@ export function AppShell() {
                 {visibleOperationsNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
                         Operations
                         <ChevronDown className="h-4 w-4" />
                       </button>
@@ -157,7 +153,7 @@ export function AppShell() {
                 {visibleAdminNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
                         Admin
                         <ChevronDown className="h-4 w-4" />
                       </button>
