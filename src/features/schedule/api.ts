@@ -44,12 +44,42 @@ export type MyScheduleResponse = {
   officeBookings: ScheduleOfficeBooking[];
 };
 
+export type DashboardCalendarDay = {
+  date: string;
+  hasUserBooking: boolean;
+  fullyBooked: boolean;
+};
+
+export type DashboardCalendarResponse = {
+  organization: {
+    id: string;
+    name: string;
+    slug: string;
+    membershipRole: "admin" | "member";
+  };
+  fromDate: string;
+  toDate: string;
+  days: DashboardCalendarDay[];
+};
+
 export async function getMySchedule(input: {
   organizationId: string;
   fromDate: string;
   toDate: string;
 }) {
   return invokeEdgeFunction<MyScheduleResponse>("my-schedule", {
+    method: "GET",
+    sessionToken: requireSessionToken(),
+    query: input,
+  });
+}
+
+export async function getDashboardCalendar(input: {
+  organizationId: string;
+  fromDate: string;
+  toDate: string;
+}) {
+  return invokeEdgeFunction<DashboardCalendarResponse>("dashboard-calendar", {
     method: "GET",
     sessionToken: requireSessionToken(),
     query: input,
