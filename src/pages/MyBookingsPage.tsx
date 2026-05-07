@@ -149,7 +149,10 @@ export default function MyBookingsPage() {
           </div>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Personal schedule</h1>
         </div>
-        <Button onClick={() => setCurrentMonth(new Date())} className="rounded-full bg-violet-600 px-6 text-white hover:bg-violet-700">
+        <Button
+          onClick={() => setCurrentMonth(new Date())}
+          className="rounded-full bg-violet-600 px-6 text-white shadow-[0_18px_40px_-26px_rgba(124,58,237,0.45)] hover:bg-violet-700"
+        >
           Today
         </Button>
       </div>
@@ -161,18 +164,18 @@ export default function MyBookingsPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-full"
+                className="rounded-full bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-800"
                 onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              <h2 className="min-w-[180px] text-center text-2xl font-bold text-slate-950">
-                {format(currentMonth, "MMMM yyyy")}
-              </h2>
+              <div className="min-w-[220px] rounded-full border border-slate-200/80 bg-slate-50/90 px-5 py-2.5 text-center shadow-inner">
+                <h2 className="text-2xl font-bold capitalize text-slate-950">{format(currentMonth, "MMMM yyyy")}</h2>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-full"
+                className="rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800"
                 onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
               >
                 <ChevronRight className="h-5 w-5" />
@@ -238,11 +241,11 @@ export default function MyBookingsPage() {
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-slate-950">Overview</h2>
               <div className="mt-5 grid gap-4">
-                <div className="rounded-[1.4rem] bg-[#f6f2ff] p-4">
+                <div className="rounded-[1.4rem] border border-violet-100 bg-[linear-gradient(180deg,#faf7ff,#f4edff)] p-4 shadow-[0_18px_44px_-36px_rgba(124,58,237,0.28)]">
                   <p className="text-xs uppercase tracking-[0.18em] text-violet-500">Desk reservations</p>
                   <p className="mt-2 text-2xl font-bold text-slate-950">{roomReservations.length}</p>
                 </div>
-                <div className="rounded-[1.4rem] bg-[#fff5f3] p-4">
+                <div className="rounded-[1.4rem] border border-orange-100 bg-[linear-gradient(180deg,#fff7f2,#fff2ea)] p-4 shadow-[0_18px_44px_-36px_rgba(249,115,22,0.22)]">
                   <p className="text-xs uppercase tracking-[0.18em] text-orange-500">Office bookings</p>
                   <p className="mt-2 text-2xl font-bold text-slate-950">{officeBookings.length}</p>
                 </div>

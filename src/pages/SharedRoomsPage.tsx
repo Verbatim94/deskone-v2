@@ -111,13 +111,21 @@ export default function SharedRoomsPage() {
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Check availability for today</h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="rounded-full" onClick={() => setDate(subDays(date, 1))}>
+        <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/95 p-1.5 shadow-[0_18px_48px_-34px_rgba(91,74,255,0.18)]">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-800"
+            onClick={() => setDate(subDays(date, 1))}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[230px] justify-start rounded-full border-slate-200 bg-white font-medium text-slate-700">
+              <Button
+                variant="ghost"
+                className="w-[240px] justify-start rounded-full bg-white font-medium text-slate-700 hover:bg-slate-50"
+              >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {format(date, "PPP")}
               </Button>
@@ -126,7 +134,12 @@ export default function SharedRoomsPage() {
               <Calendar mode="single" selected={date} onSelect={(value) => value && setDate(value)} initialFocus />
             </PopoverContent>
           </Popover>
-          <Button variant="outline" size="icon" className="rounded-full" onClick={() => setDate(addDays(date, 1))}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800"
+            onClick={() => setDate(addDays(date, 1))}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -213,15 +226,15 @@ export default function SharedRoomsPage() {
             </div>
 
             <div className="mt-5 space-y-4">
-              <div className="rounded-[1.4rem] bg-[#f6f2ff] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-violet-500">Environment</p>
-                <p className="mt-2 text-lg font-semibold text-slate-950">{activeOrganization?.name ?? "No environment"}</p>
-              </div>
-              <div className="rounded-[1.4rem] bg-[#eef6ff] p-4">
+            <div className="rounded-[1.4rem] border border-violet-100 bg-[linear-gradient(180deg,#faf7ff,#f4edff)] p-4 shadow-[0_18px_44px_-36px_rgba(124,58,237,0.28)]">
+              <p className="text-xs uppercase tracking-[0.18em] text-violet-500">Environment</p>
+              <p className="mt-2 text-lg font-semibold text-slate-950">{activeOrganization?.name ?? "No environment"}</p>
+            </div>
+              <div className="rounded-[1.4rem] border border-sky-100 bg-[linear-gradient(180deg,#f2f8ff,#ebf5ff)] p-4 shadow-[0_18px_44px_-36px_rgba(14,165,233,0.22)]">
                 <p className="text-xs uppercase tracking-[0.18em] text-sky-500">Reservations</p>
                 <p className="mt-2 text-lg font-semibold text-slate-950">{roomReservations.length}</p>
               </div>
-              <div className="rounded-[1.4rem] bg-[#fff5f3] p-4">
+              <div className="rounded-[1.4rem] border border-orange-100 bg-[linear-gradient(180deg,#fff7f2,#fff2ea)] p-4 shadow-[0_18px_44px_-36px_rgba(249,115,22,0.22)]">
                 <p className="text-xs uppercase tracking-[0.18em] text-orange-500">Office bookings</p>
                 <p className="mt-2 text-lg font-semibold text-slate-950">{officeBookings.length}</p>
               </div>

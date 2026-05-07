@@ -785,11 +785,17 @@ export default function SuperAdminConsolePage() {
         </section>
 
       <Tabs defaultValue="organizations" className="space-y-6">
-        <TabsList className="h-auto rounded-2xl bg-white/85 p-2 shadow-sm">
-          <TabsTrigger value="organizations" className="rounded-xl px-4 py-2.5">
+        <TabsList className="h-auto rounded-[1.3rem] border border-white/80 bg-white/92 p-2 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.24)]">
+          <TabsTrigger
+            value="organizations"
+            className="rounded-xl px-4 py-2.5 text-slate-600 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-900 data-[state=active]:shadow-sm"
+          >
             Organizations
           </TabsTrigger>
-          <TabsTrigger value="users" className="rounded-xl px-4 py-2.5">
+          <TabsTrigger
+            value="users"
+            className="rounded-xl px-4 py-2.5 text-slate-600 data-[state=active]:bg-violet-50 data-[state=active]:text-violet-900 data-[state=active]:shadow-sm"
+          >
             Users
           </TabsTrigger>
         </TabsList>
@@ -1306,18 +1312,25 @@ export default function SuperAdminConsolePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-4">
-                  <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr,0.8fr,0.9fr]">
+                  <div className="rounded-[1.6rem] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.98))] p-3 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.18)]">
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <Badge className="rounded-full bg-violet-100 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-violet-700 hover:bg-violet-100">
+                        Directory filters
+                      </Badge>
+                      <span className="text-xs uppercase tracking-[0.16em] text-slate-400">Search, scope and status</span>
+                    </div>
+                    <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr,0.8fr,0.9fr]">
                     <Input
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       placeholder="Search by username or full name"
-                      className="rounded-xl border-slate-200"
+                      className="rounded-xl border-slate-200 bg-white shadow-sm"
                     />
 
                     <select
                       value={organizationFilter}
                       onChange={(event) => setOrganizationFilter(event.target.value)}
-                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-300"
+                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
                     >
                       <option value="all">All organizations</option>
                       {organizations.map((organization) => (
@@ -1332,7 +1345,7 @@ export default function SuperAdminConsolePage() {
                       onChange={(event) =>
                         setRoleFilter(event.target.value as "all" | "super_admin" | "admin" | "user")
                       }
-                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-300"
+                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
                     >
                       <option value="all">All roles</option>
                       <option value="super_admin">Super-admin</option>
@@ -1343,12 +1356,13 @@ export default function SuperAdminConsolePage() {
                     <select
                       value={activeFilter}
                       onChange={(event) => setActiveFilter(event.target.value as "all" | "active" | "inactive")}
-                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-sky-300"
+                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
                     >
                       <option value="all">Active + inactive</option>
                       <option value="active">Active only</option>
                       <option value="inactive">Inactive only</option>
                     </select>
+                  </div>
                   </div>
 
                   <div className="grid gap-6 xl:grid-cols-[0.86fr,1.14fr]">
