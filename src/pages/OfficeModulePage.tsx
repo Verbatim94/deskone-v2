@@ -115,10 +115,10 @@ function ReleasePresetButton({
       type="button"
       onClick={() => onClick(preset)}
       className={cn(
-        "rounded-[1.2rem] border px-3 py-3 text-sm font-medium transition-colors",
+        "rounded-[1.2rem] border px-3 py-3 text-sm font-medium shadow-sm transition-all",
         activePreset === preset
-          ? "border-cyan-300 bg-cyan-50 text-cyan-800"
-          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+          ? "border-cyan-300 bg-[linear-gradient(180deg,#f1fbff,#e7f8ff)] text-cyan-800 shadow-[0_14px_30px_-24px_rgba(14,165,233,0.45)]"
+          : "border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-800",
       )}
     >
       <span className="block">{config.label}</span>
@@ -301,12 +301,12 @@ export default function OfficeModulePage() {
           </Badge>
         </div>
         <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+          <div className="flex items-center gap-2 rounded-full border border-white/80 bg-white/96 p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.18)]">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full"
+              className="h-9 w-9 rounded-full bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-800"
               onClick={() => setSelectedDate((current) => shiftIsoDate(current, -1))}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -315,13 +315,13 @@ export default function OfficeModulePage() {
               type="date"
               value={selectedDate}
               onChange={(event) => setSelectedDate(event.target.value)}
-              className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+              className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 font-medium text-slate-700 shadow-none focus-visible:ring-0"
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full"
+              className="h-9 w-9 rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800"
               onClick={() => setSelectedDate((current) => shiftIsoDate(current, 1))}
             >
               <ChevronRight className="h-4 w-4" />
@@ -330,7 +330,7 @@ export default function OfficeModulePage() {
           <Button
             type="button"
             variant="outline"
-            className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50"
+            className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 shadow-sm hover:bg-slate-50"
             onClick={() => setSelectedDate(getDateInputValue())}
           >
             Today
@@ -339,17 +339,17 @@ export default function OfficeModulePage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+        <div className="rounded-[1.7rem] border border-white/80 bg-[linear-gradient(180deg,#ffffff,#f9fbff)] p-5 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.16)]">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Portfolio</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{offices.length}</p>
           <p className="mt-1 text-sm text-slate-500">Offices visible for this environment.</p>
         </div>
-        <div className="rounded-[1.7rem] border border-white/80 bg-white/82 p-5 shadow-sm">
+        <div className="rounded-[1.7rem] border border-white/80 bg-[linear-gradient(180deg,#f1fbff,#ffffff)] p-5 shadow-[0_18px_42px_-34px_rgba(14,165,233,0.18)]">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Open windows</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{totalReleaseWindows}</p>
           <p className="mt-1 text-sm text-slate-500">Release windows on {formatDateLabel(selectedDate)}.</p>
         </div>
-        <div className="rounded-[1.7rem] border border-slate-900/85 bg-slate-950 p-5 text-white shadow-sm">
+        <div className="rounded-[1.7rem] border border-slate-900/85 bg-[linear-gradient(180deg,#111827,#0f172a)] p-5 text-white shadow-[0_20px_44px_-30px_rgba(15,23,42,0.38)]">
           <p className="text-[11px] uppercase tracking-[0.22em] text-slate-300">Focus</p>
           <p className="mt-2 text-lg font-semibold text-white">{selectedOffice?.name ?? "Pick an office"}</p>
           <p className="mt-1 text-sm text-slate-300">{selectedOfficeActiveBookings.length} active bookings.</p>

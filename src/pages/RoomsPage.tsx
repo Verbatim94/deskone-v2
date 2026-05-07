@@ -112,10 +112,10 @@ function SegmentButton({
       type="button"
       onClick={() => onClick(segment)}
       className={cn(
-        "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+        "rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all",
         activeSegment === segment
-          ? "border-sky-200 bg-sky-50 text-sky-800"
-          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+          ? "border-sky-200 bg-[linear-gradient(180deg,#f0f8ff,#e7f3ff)] text-sky-800 shadow-[0_12px_28px_-20px_rgba(14,165,233,0.45)]"
+          : "border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-800",
       )}
     >
       {label}
@@ -139,10 +139,10 @@ function DeskFilterButton({
       type="button"
       onClick={() => onClick(value)}
       className={cn(
-        "rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+        "rounded-full border px-3 py-2 text-xs font-medium shadow-sm transition-all",
         activeValue === value
-          ? "border-sky-200 bg-sky-50 text-sky-800"
-          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+          ? "border-sky-200 bg-[linear-gradient(180deg,#f0f8ff,#e7f3ff)] text-sky-800 shadow-[0_12px_28px_-20px_rgba(14,165,233,0.45)]"
+          : "border-slate-200 bg-white text-slate-600 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-800",
       )}
     >
       {label}
@@ -331,12 +331,12 @@ export default function RoomsPage() {
           <SegmentButton segment="full" activeSegment={selectedSegment} onClick={setSelectedSegment} />
           <SegmentButton segment="am" activeSegment={selectedSegment} onClick={setSelectedSegment} />
           <SegmentButton segment="pm" activeSegment={selectedSegment} onClick={setSelectedSegment} />
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+          <div className="flex items-center gap-2 rounded-full border border-white/80 bg-white/96 p-1 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.18)]">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full"
+              className="h-9 w-9 rounded-full bg-violet-50 text-violet-700 hover:bg-violet-100 hover:text-violet-800"
               onClick={() => setSelectedDate((current) => shiftIsoDate(current, -1))}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -345,13 +345,13 @@ export default function RoomsPage() {
               type="date"
               value={selectedDate}
               onChange={(event) => setSelectedDate(event.target.value)}
-              className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+              className="h-9 w-[190px] rounded-full border-0 bg-transparent px-2 font-medium text-slate-700 shadow-none focus-visible:ring-0"
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full"
+              className="h-9 w-9 rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-800"
               onClick={() => setSelectedDate((current) => shiftIsoDate(current, 1))}
             >
               <ChevronRight className="h-4 w-4" />
@@ -360,7 +360,7 @@ export default function RoomsPage() {
           <Button
             type="button"
             variant="outline"
-            className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 hover:bg-slate-50"
+            className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 shadow-sm hover:bg-slate-50"
             onClick={() => setSelectedDate(todayIsoDate)}
           >
             Today
@@ -384,8 +384,8 @@ export default function RoomsPage() {
           <p className="mt-2 text-lg font-semibold text-white">{selectedRoom?.name ?? "Pick a room"}</p>
           <p className="mt-1 text-sm text-slate-300">
             {currentReservation
-              ? `${currentReservation.roomName} · ${currentReservation.deskLabel ?? "Desk"} already secured.`
-              : `Viewing ${formatDateLabel(selectedDate)} · ${segmentLabel}.`}
+              ? `${currentReservation.roomName} / ${currentReservation.deskLabel ?? "Desk"} already secured.`
+              : `Viewing ${formatDateLabel(selectedDate)} / ${segmentLabel}.`}
           </p>
         </div>
       </div>
@@ -839,7 +839,7 @@ export default function RoomsPage() {
               </div>
             ) : null}
 
-            <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            <div className="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(180deg,#f8fafc,#f2f6fb)] p-4 text-sm text-slate-600 shadow-[0_18px_42px_-36px_rgba(15,23,42,0.16)]">
               <p className="font-medium text-slate-950">Access</p>
               <p className="mt-2">
                 Availability reflects organization membership, direct room access and sharing groups automatically.
