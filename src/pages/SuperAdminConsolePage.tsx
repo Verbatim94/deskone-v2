@@ -1320,49 +1320,49 @@ export default function SuperAdminConsolePage() {
                       <span className="text-xs uppercase tracking-[0.16em] text-slate-400">Search, scope and status</span>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr,0.8fr,0.9fr]">
-                    <Input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Search by username or full name"
-                      className="rounded-xl border-slate-200 bg-white shadow-sm"
-                    />
+                      <Input
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        placeholder="Search by username or full name"
+                        className="rounded-xl border-slate-200 bg-white shadow-sm"
+                      />
 
-                    <select
-                      value={organizationFilter}
-                      onChange={(event) => setOrganizationFilter(event.target.value)}
-                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
-                    >
-                      <option value="all">All organizations</option>
-                      {organizations.map((organization) => (
-                        <option key={organization.id} value={organization.id}>
-                          {organization.name}
-                        </option>
-                      ))}
-                    </select>
+                      <select
+                        value={organizationFilter}
+                        onChange={(event) => setOrganizationFilter(event.target.value)}
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
+                      >
+                        <option value="all">All organizations</option>
+                        {organizations.map((organization) => (
+                          <option key={organization.id} value={organization.id}>
+                            {organization.name}
+                          </option>
+                        ))}
+                      </select>
 
-                    <select
-                      value={roleFilter}
-                      onChange={(event) =>
-                        setRoleFilter(event.target.value as "all" | "super_admin" | "admin" | "user")
-                      }
-                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
-                    >
-                      <option value="all">All roles</option>
-                      <option value="super_admin">Super-admin</option>
-                      <option value="admin">Admin</option>
-                      <option value="user">User</option>
-                    </select>
+                      <select
+                        value={roleFilter}
+                        onChange={(event) =>
+                          setRoleFilter(event.target.value as "all" | "super_admin" | "admin" | "user")
+                        }
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
+                      >
+                        <option value="all">All roles</option>
+                        <option value="super_admin">Super-admin</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                      </select>
 
-                    <select
-                      value={activeFilter}
-                      onChange={(event) => setActiveFilter(event.target.value as "all" | "active" | "inactive")}
-                      className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
-                    >
-                      <option value="all">Active + inactive</option>
-                      <option value="active">Active only</option>
-                      <option value="inactive">Inactive only</option>
-                    </select>
-                  </div>
+                      <select
+                        value={activeFilter}
+                        onChange={(event) => setActiveFilter(event.target.value as "all" | "active" | "inactive")}
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 shadow-sm outline-none focus:border-sky-300"
+                      >
+                        <option value="all">Active + inactive</option>
+                        <option value="active">Active only</option>
+                        <option value="inactive">Inactive only</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="grid gap-6 xl:grid-cols-[0.86fr,1.14fr]">
@@ -1389,10 +1389,10 @@ export default function SuperAdminConsolePage() {
                                 type="button"
                                 onClick={() => setSelectedUserId(user.id)}
                                 className={cn(
-                                  "rounded-[1.25rem] border p-4 text-left transition-colors",
+                                  "rounded-[1.25rem] border p-4 text-left transition-all",
                                   user.id === selectedUser?.id
-                                    ? "border-sky-200 bg-sky-50 shadow-sm"
-                                    : "border-slate-200/70 bg-white hover:bg-slate-50",
+                                    ? "border-sky-200 bg-[linear-gradient(180deg,rgba(240,249,255,0.96),rgba(255,255,255,0.98))] shadow-[0_18px_42px_-34px_rgba(14,165,233,0.24)]"
+                                    : "border-slate-200/70 bg-white hover:-translate-y-0.5 hover:bg-slate-50",
                                 )}
                               >
                                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1418,13 +1418,13 @@ export default function SuperAdminConsolePage() {
                                 <div className="mt-3 flex flex-wrap gap-2">
                                   <Badge
                                     variant="outline"
-                                    className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600"
+                                    className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600"
                                   >
                                     {user.isActive ? "active" : "inactive"}
                                   </Badge>
                                   <Badge
                                     variant="outline"
-                                    className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600"
+                                    className="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-slate-600"
                                   >
                                     {user.memberships.length} memberships
                                   </Badge>
@@ -1444,7 +1444,7 @@ export default function SuperAdminConsolePage() {
                           </div>
                         ) : (
                           <div className="grid gap-5">
-                            <div className="flex flex-wrap items-start justify-between gap-3 rounded-[1.4rem] border border-slate-200/70 bg-white p-5">
+                            <div className="flex flex-wrap items-start justify-between gap-3 rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.98))] p-5 shadow-[0_18px_42px_-36px_rgba(15,23,42,0.16)]">
                               <div>
                                 <p className="text-lg font-semibold text-slate-950">
                                   {selectedUser.profile.displayName ?? selectedUser.fullName}

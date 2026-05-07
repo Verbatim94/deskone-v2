@@ -1096,13 +1096,13 @@ export default function AdminStudioPage() {
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as StudioTab)} className="space-y-6">
         <TabsList className="h-auto rounded-[1.8rem] border border-white/80 bg-white/76 p-2 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.16)] backdrop-blur">
-          <TabsTrigger value="rooms" className="rounded-[1.2rem] px-4 py-2.5">
+          <TabsTrigger value="rooms" className="rounded-[1.2rem] px-4 py-2.5 text-slate-600 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-900 data-[state=active]:shadow-sm">
             Rooms
           </TabsTrigger>
-          <TabsTrigger value="groups" className="rounded-[1.2rem] px-4 py-2.5">
+          <TabsTrigger value="groups" className="rounded-[1.2rem] px-4 py-2.5 text-slate-600 data-[state=active]:bg-violet-50 data-[state=active]:text-violet-900 data-[state=active]:shadow-sm">
             Sharing groups
           </TabsTrigger>
-          <TabsTrigger value="designer" className="rounded-[1.2rem] px-4 py-2.5">
+          <TabsTrigger value="designer" className="rounded-[1.2rem] px-4 py-2.5 text-slate-600 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-900 data-[state=active]:shadow-sm">
             Designer
           </TabsTrigger>
         </TabsList>
@@ -1223,7 +1223,7 @@ export default function AdminStudioPage() {
                   value={roomSearch}
                   onChange={(event) => setRoomSearch(event.target.value)}
                   placeholder="Search rooms by name, slug or description"
-                  className="rounded-xl border-slate-200"
+                  className="rounded-xl border-slate-200 bg-white shadow-sm"
                 />
 
                 {roomsQuery.isLoading ? (
@@ -1644,7 +1644,7 @@ export default function AdminStudioPage() {
                     </select>
                   </div>
 
-                  <div className="rounded-[1.4rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(180deg,#f8fafc,#f2f6fb)] p-4 text-sm text-slate-600 shadow-[0_18px_42px_-36px_rgba(15,23,42,0.16)]">
                     Layout changes are scoped to the active organization, audited server-side and validated against desk
                     dependencies before destructive updates.
                   </div>
@@ -1835,7 +1835,7 @@ export default function AdminStudioPage() {
                         />
                       </div>
 
-                      <div className="rounded-[1.4rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
+                      <div className="rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(180deg,#f8fafc,#f2f6fb)] p-4 text-sm text-slate-600 shadow-[0_18px_42px_-36px_rgba(15,23,42,0.16)]">
                         Last saved {formatDateTime(layoutEditorState.room.updatedAt)} | {layoutEditorState.walls.length} walls currently remain read-only in this first designer slice.
                       </div>
                     </CardContent>
@@ -2050,7 +2050,7 @@ export default function AdminStudioPage() {
                   )}
                 </div>
 
-                <div className="bg-white/80 p-6">
+                <div className="bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.9))] p-6">
                   <p className="text-sm font-semibold text-slate-950">Inspector</p>
                   <p className="mt-1 text-sm text-slate-600">Edit the selected desk or zone without leaving the canvas.</p>
 
@@ -2238,7 +2238,7 @@ export default function AdminStudioPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-[1.4rem] border border-slate-200/70 bg-slate-50 p-4 text-sm text-slate-600">
+                      <div className="rounded-[1.4rem] border border-slate-200/70 bg-[linear-gradient(180deg,#f8fafc,#f2f6fb)] p-4 text-sm text-slate-600 shadow-[0_18px_42px_-36px_rgba(15,23,42,0.16)]">
                         <p className="font-medium text-slate-950">Sharing preview</p>
                         <p className="mt-2">
                           This workstation inherits room-level user and group scope, with desk attributes preserved as
@@ -2246,7 +2246,7 @@ export default function AdminStudioPage() {
                         </p>
                       </div>
 
-                      <div className="rounded-[1.4rem] border border-cyan-200/80 bg-cyan-50 p-4 text-sm text-cyan-900">
+                      <div className="rounded-[1.4rem] border border-cyan-200/80 bg-[linear-gradient(180deg,#f0fbff,#e8f8ff)] p-4 text-sm text-cyan-900 shadow-[0_18px_42px_-36px_rgba(14,165,233,0.2)]">
                         Drag the workstation directly on the canvas to move it. Use the inspector when you need precise
                         geometry or fine-tuning.
                       </div>
@@ -2382,7 +2382,7 @@ export default function AdminStudioPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="mt-8 rounded-[1.5rem] border border-dashed border-slate-200 p-5 text-sm text-slate-500">
+                    <div className="mt-8 rounded-[1.5rem] border border-dashed border-slate-200 bg-white/70 p-5 text-sm text-slate-500">
                       Select a desk or zone to edit its attributes. Save commits both geometry and scoped access in one
                       backend transaction.
                     </div>
