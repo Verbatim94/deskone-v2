@@ -93,6 +93,39 @@ export default function SharedRoomsPage() {
 
   const roomReservations = activityQuery.data?.roomReservations ?? [];
   const officeBookings = activityQuery.data?.officeBookings ?? [];
+  const totalActivities = roomReservations.length + officeBookings.length;
+  const roomShare = totalActivities ? Math.round((roomReservations.length / totalActivities) * 100) : 0;
+  const roomActivityBreakdown = useMemo(() => {
+    const grouped = new Map<string, number>();
+
+    for (const reservation of roomReservations) {
+      grouped.set(reservation.roomName, (grouped.get(reservation.roomName) ?? 0) + 1);
+    }
+
+    return Array.from(grouped.entries())
+      .map(([label, count]) => ({ label, count }))
+      .sort((left, right) => right.count - left.count)
+      .slice(0, 4);
+  }, [roomReservations]);
+  const segmentActivityBreakdown = useMemo(() => {
+    const counters = {
+      full: 0,
+      am: 0,
+      pm: 0,
+      offices: officeBookings.length,
+    };
+
+    for (const reservation of roomReservations) {
+      counters[reservation.segment] += 1;
+    }
+
+    return [
+      { label: "Full day", count: counters.full, tone: "bg-violet-500" },
+      { label: "Morning", count: counters.am, tone: "bg-sky-500" },
+      { label: "Afternoon", count: counters.pm, tone: "bg-pink-500" },
+      { label: "Offices", count: counters.offices, tone: "bg-orange-400" },
+    ];
+  }, [officeBookings.length, roomReservations]);
   const isLoadingAvailability =
     roomsQuery.isLoading || availabilityQueries.some((query) => query.isLoading && !query.data);
 
@@ -226,17 +259,96 @@ export default function SharedRoomsPage() {
             </div>
 
             <div className="mt-5 space-y-4">
-            <div className="rounded-[1.4rem] border border-violet-100 bg-[linear-gradient(180deg,#faf7ff,#f4edff)] p-4 shadow-[0_18px_44px_-36px_rgba(124,58,237,0.28)]">
-              <p className="text-xs uppercase tracking-[0.18em] text-violet-500">Environment</p>
-              <p className="mt-2 text-lg font-semibold text-slate-950">{activeOrganization?.name ?? "No environment"}</p>
-            </div>
-              <div className="rounded-[1.4rem] border border-sky-100 bg-[linear-gradient(180deg,#f2f8ff,#ebf5ff)] p-4 shadow-[0_18px_44px_-36px_rgba(14,165,233,0.22)]">
-                <p className="text-xs uppercase tracking-[0.18em] text-sky-500">Reservations</p>
-                <p className="mt-2 text-lg font-semibold text-slate-950">{roomReservations.length}</p>
+              <div className="grid gap-4 md:grid-cols-[0.92fr,1.08fr]">
+                <div className="rounded-[1.5rem] border border-violet-100 bg-[linear-gradient(180deg,#faf7ff,#f4edff)] p-5 shadow-[0_18px_44px_-36px_rgba(124,58,237,0.28)]">
+                  <p className="text-xs uppercase tracking-[0.18em] text-violet-500">Environment</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-950">{activeOrganization?.name ?? "No environment"}</p>
+                  <div className="mt-5 flex items-center gap-4">
+                    <div
+                      className="grid h-28 w-28 place-items-center rounded-full"
+                      style={{
+                        background: `conic-gradient(#7c3aed 0 ${roomShare}%, #fb923c ${roomShare}% 100%)`,
+                      }}
+                    >
+                      <div className="grid h-20 w-20 place-items-center rounded-full bg-white text-center shadow-inner">
+                        <span className="text-2xl font-semibold text-slate-950">{totalActivities}</span>
+                        <span className="text-[11px] uppercase tracking-[0.16em] text-slate-400">items</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <span className="h-2.5 w-2.5 rounded-full bg-violet-500" />
+                        <span>Desk reservations</span>
+                        <span className="font-semibold text-slate-950">{roomReservations.length}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <span className="h-2.5 w-2.5 rounded-full bg-orange-400" />
+                        <span>Office bookings</span>
+                        <span className="font-semibold text-slate-950">{officeBookings.length}</span>
+                      </div>
+                      <p className="text-xs leading-5 text-slate-500">
+                        A quick split of your day across shared rooms and private offices.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,#f8fbff)] p-5 shadow-[0_18px_44px_-36px_rgba(15,23,42,0.16)]">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Today by room</p>
+                      <p className="mt-1 text-sm font-medium text-slate-950">Where your reservations are concentrated</p>
+                    </div>
+                    <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+                      {roomActivityBreakdown.length || roomReservations.length ? "Live" : "Empty"}
+                    </Badge>
+                  </div>
+                  <div className="mt-5 space-y-3">
+                    {roomActivityBreakdown.length ? (
+                      roomActivityBreakdown.map((entry) => {
+                        const percentage = roomReservations.length ? Math.round((entry.count / roomReservations.length) * 100) : 0;
+
+                        return (
+                          <div key={entry.label} className="space-y-2">
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                              <span className="truncate font-medium text-slate-700">{entry.label}</span>
+                              <span className="text-slate-500">{entry.count}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-slate-100">
+                              <div
+                                className="h-full rounded-full bg-[linear-gradient(90deg,#7c3aed,#4f46e5)]"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-[1.15rem] border border-dashed border-slate-200 bg-white/80 p-4 text-sm text-slate-500">
+                        No room reservations yet for this date.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="rounded-[1.4rem] border border-orange-100 bg-[linear-gradient(180deg,#fff7f2,#fff2ea)] p-4 shadow-[0_18px_44px_-36px_rgba(249,115,22,0.22)]">
-                <p className="text-xs uppercase tracking-[0.18em] text-orange-500">Office bookings</p>
-                <p className="mt-2 text-lg font-semibold text-slate-950">{officeBookings.length}</p>
+
+              <div className="rounded-[1.5rem] border border-sky-100 bg-[linear-gradient(180deg,#f5faff,#eef6ff)] p-5 shadow-[0_18px_44px_-36px_rgba(14,165,233,0.2)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-sky-500">Activity mix</p>
+                    <p className="mt-1 text-sm font-medium text-slate-950">Reservations by segment and module</p>
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.16em] text-slate-400">Day view</span>
+                </div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-4">
+                  {segmentActivityBreakdown.map((entry) => (
+                    <div key={entry.label} className="rounded-[1.2rem] border border-white/80 bg-white/90 p-4 shadow-sm">
+                      <div className={cn("h-2 rounded-full", entry.tone)} />
+                      <p className="mt-4 text-2xl font-semibold text-slate-950">{entry.count}</p>
+                      <p className="mt-1 text-sm text-slate-500">{entry.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </CardContent>
