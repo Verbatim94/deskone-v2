@@ -127,21 +127,24 @@ export function AppShell() {
                 {visibleOperationsNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-white/72 hover:text-slate-950 hover:shadow-[0_16px_32px_-28px_rgba(15,23,42,0.2)] data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)] data-[state=open]:ring-1 data-[state=open]:ring-slate-200/70">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-violet-700/78 transition-all duration-200 hover:bg-violet-50/80 hover:text-violet-900 hover:shadow-[0_16px_32px_-28px_rgba(91,74,255,0.24)] data-[state=open]:bg-white data-[state=open]:text-violet-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(91,74,255,0.28)] data-[state=open]:ring-1 data-[state=open]:ring-violet-200/70">
                         Operations
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"
-                      className="w-56 rounded-[1.25rem] border border-slate-200/90 bg-white/98 p-2 backdrop-blur-xl shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
+                      className="w-56 rounded-[1.25rem] border border-violet-200/70 bg-[linear-gradient(180deg,rgba(250,247,255,0.98),rgba(255,255,255,0.98))] p-2 backdrop-blur-xl shadow-[0_28px_60px_-32px_rgba(91,74,255,0.18)]"
                     >
+                      <DropdownMenuLabel className="px-3 pb-2 pt-1 text-[11px] uppercase tracking-[0.18em] text-violet-500">
+                        Operations
+                      </DropdownMenuLabel>
                       <DropdownMenuGroup>
                         {visibleOperationsNavigation.map((item) => (
                           <DropdownMenuItem
                             key={item.to}
                             asChild
-                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:text-slate-950"
+                            className="rounded-xl bg-white/92 px-3 py-2.5 text-slate-700 hover:bg-violet-50/90 hover:text-violet-950 focus:bg-violet-50/90 focus:text-violet-950"
                           >
                             <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
                               <item.icon className="h-4 w-4" />
@@ -157,21 +160,24 @@ export function AppShell() {
                 {visibleAdminNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-white/72 hover:text-slate-950 hover:shadow-[0_16px_32px_-28px_rgba(15,23,42,0.2)] data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)] data-[state=open]:ring-1 data-[state=open]:ring-slate-200/70">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-sky-800/78 transition-all duration-200 hover:bg-sky-50/80 hover:text-sky-950 hover:shadow-[0_16px_32px_-28px_rgba(14,116,144,0.22)] data-[state=open]:bg-white data-[state=open]:text-sky-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(14,116,144,0.24)] data-[state=open]:ring-1 data-[state=open]:ring-sky-200/75">
                         Admin
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"
-                      className="w-56 rounded-[1.25rem] border border-slate-200/90 bg-white/98 p-2 backdrop-blur-xl shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
+                      className="w-56 rounded-[1.25rem] border border-sky-200/75 bg-[linear-gradient(180deg,rgba(243,250,255,0.98),rgba(255,255,255,0.98))] p-2 backdrop-blur-xl shadow-[0_28px_60px_-32px_rgba(14,116,144,0.18)]"
                     >
+                      <DropdownMenuLabel className="px-3 pb-2 pt-1 text-[11px] uppercase tracking-[0.18em] text-sky-600">
+                        Admin
+                      </DropdownMenuLabel>
                       <DropdownMenuGroup>
                         {visibleAdminNavigation.map((item) => (
                           <DropdownMenuItem
                             key={item.to}
                             asChild
-                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:text-slate-950"
+                            className="rounded-xl bg-white/92 px-3 py-2.5 text-slate-700 hover:bg-sky-50/90 hover:text-sky-950 focus:bg-sky-50/90 focus:text-sky-950"
                           >
                             <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
                               <item.icon className="h-4 w-4" />
