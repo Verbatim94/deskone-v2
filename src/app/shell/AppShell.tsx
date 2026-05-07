@@ -15,7 +15,7 @@ import {
   UserCog,
 } from "lucide-react";
 
-import deskoneWordmark from "@/assets/deskone-wordmark-transparent-clean.png";
+import deskoneWordmark from "@/assets/deskone-wordmark-app.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,7 +100,7 @@ export function AppShell() {
           <div className="flex flex-col gap-4 px-1 py-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 flex-1 items-center gap-6">
               <NavLink to="/" end className="shrink-0">
-                <img src={deskoneWordmark} alt="Deskone" className="h-12 w-auto object-contain sm:h-14" />
+                <img src={deskoneWordmark} alt="Deskone" className="h-11 w-auto object-contain sm:h-12" />
               </NavLink>
 
               <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto pb-1">
@@ -110,10 +110,10 @@ export function AppShell() {
                     to={item.to}
                     className={({ isActive }) =>
                       cn(
-                        "shrink-0 rounded-full px-3.5 py-2.5 text-sm font-medium transition-all",
+                        "shrink-0 rounded-full px-3.5 py-2.5 text-sm font-medium transition-all duration-200",
                         isActive
-                          ? "bg-white text-slate-950 shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)]"
-                          : "text-slate-600 hover:bg-white/80 hover:text-slate-950",
+                          ? "bg-white text-slate-950 shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)] ring-1 ring-slate-200/70"
+                          : "text-slate-600 hover:bg-white/72 hover:text-slate-950 hover:shadow-[0_16px_32px_-28px_rgba(15,23,42,0.2)]",
                       )
                     }
                   >
@@ -127,7 +127,7 @@ export function AppShell() {
                 {visibleOperationsNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950 data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)]">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-white/72 hover:text-slate-950 hover:shadow-[0_16px_32px_-28px_rgba(15,23,42,0.2)] data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)] data-[state=open]:ring-1 data-[state=open]:ring-slate-200/70">
                         Operations
                         <ChevronDown className="h-4 w-4" />
                       </button>
@@ -141,7 +141,7 @@ export function AppShell() {
                           <DropdownMenuItem
                             key={item.to}
                             asChild
-                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950"
+                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:text-slate-950"
                           >
                             <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
                               <item.icon className="h-4 w-4" />
@@ -157,7 +157,7 @@ export function AppShell() {
                 {visibleAdminNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950 data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)]">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-white/72 hover:text-slate-950 hover:shadow-[0_16px_32px_-28px_rgba(15,23,42,0.2)] data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)] data-[state=open]:ring-1 data-[state=open]:ring-slate-200/70">
                         Admin
                         <ChevronDown className="h-4 w-4" />
                       </button>
@@ -171,7 +171,7 @@ export function AppShell() {
                           <DropdownMenuItem
                             key={item.to}
                             asChild
-                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950"
+                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:text-slate-950"
                           >
                             <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
                               <item.icon className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function AppShell() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.22)] hover:bg-white hover:text-slate-950"
+                    className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.22)] transition-all duration-200 hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_36px_-26px_rgba(15,23,42,0.22)] data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:ring-1 data-[state=open]:ring-slate-200/70"
                   >
                     <UserCog className="mr-2 h-4 w-4" />
                     Admin
@@ -215,7 +215,7 @@ export function AppShell() {
                         </Badge>
                       </div>
                       <p className="text-xs font-normal text-slate-500">
-                        {user?.username ?? "unknown"} · {user?.role ?? "unknown"}
+                        {user?.username ?? "unknown"} / {user?.role ?? "unknown"}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -293,3 +293,4 @@ export function AppShell() {
     </div>
   );
 }
+
