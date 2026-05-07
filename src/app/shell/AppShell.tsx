@@ -127,18 +127,22 @@ export function AppShell() {
                 {visibleOperationsNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950 data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)]">
                         Operations
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"
-                      className="w-56 rounded-[1.25rem] border border-slate-200/80 bg-white/96 p-2 shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
+                      className="w-56 rounded-[1.25rem] border border-slate-200/90 bg-white/98 p-2 backdrop-blur-xl shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
                     >
                       <DropdownMenuGroup>
                         {visibleOperationsNavigation.map((item) => (
-                          <DropdownMenuItem key={item.to} asChild className="rounded-xl px-3 py-2.5">
+                          <DropdownMenuItem
+                            key={item.to}
+                            asChild
+                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950"
+                          >
                             <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
                               <item.icon className="h-4 w-4" />
                               {item.label}
@@ -153,18 +157,22 @@ export function AppShell() {
                 {visibleAdminNavigation.length ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950">
+                      <button className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-medium text-slate-600 transition-all hover:bg-white/80 hover:text-slate-950 data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(55,107,255,0.28)]">
                         Admin
                         <ChevronDown className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"
-                      className="w-56 rounded-[1.25rem] border border-slate-200/80 bg-white/96 p-2 shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
+                      className="w-56 rounded-[1.25rem] border border-slate-200/90 bg-white/98 p-2 backdrop-blur-xl shadow-[0_28px_60px_-32px_rgba(15,23,42,0.22)]"
                     >
                       <DropdownMenuGroup>
                         {visibleAdminNavigation.map((item) => (
-                          <DropdownMenuItem key={item.to} asChild className="rounded-xl px-3 py-2.5">
+                          <DropdownMenuItem
+                            key={item.to}
+                            asChild
+                            className="rounded-xl bg-white px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950"
+                          >
                             <NavLink to={item.to} className="flex items-center gap-2.5 text-slate-700">
                               <item.icon className="h-4 w-4" />
                               {item.label}
