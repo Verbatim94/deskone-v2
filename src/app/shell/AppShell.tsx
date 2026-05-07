@@ -198,7 +198,7 @@ export function AppShell() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 rounded-full border-slate-200 bg-white px-4 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.22)] transition-all duration-200 hover:bg-white hover:text-slate-950 hover:shadow-[0_18px_36px_-26px_rgba(15,23,42,0.22)] data-[state=open]:bg-white data-[state=open]:text-slate-950 data-[state=open]:ring-1 data-[state=open]:ring-slate-200/70"
+                    className="h-11 rounded-full border-slate-200/90 bg-white/96 px-4 text-slate-700 shadow-[0_14px_34px_-24px_rgba(15,23,42,0.18)] transition-all duration-200 hover:border-sky-200/80 hover:bg-sky-50/80 hover:text-sky-950 hover:shadow-[0_18px_36px_-26px_rgba(14,116,144,0.18)] data-[state=open]:border-sky-200/80 data-[state=open]:bg-white data-[state=open]:text-sky-950 data-[state=open]:shadow-[0_18px_36px_-26px_rgba(14,116,144,0.22)] data-[state=open]:ring-1 data-[state=open]:ring-sky-200/70"
                   >
                     <UserCog className="mr-2 h-4 w-4" />
                     Admin
@@ -208,7 +208,7 @@ export function AppShell() {
 
                 <DropdownMenuContent
                   align="end"
-                  className="w-[340px] rounded-[1.5rem] border border-slate-200/80 bg-white/96 p-3 shadow-[0_30px_80px_-34px_rgba(15,23,42,0.22)]"
+                  className="w-[340px] rounded-[1.5rem] border border-sky-200/75 bg-[linear-gradient(180deg,rgba(244,250,255,0.98),rgba(255,255,255,0.98))] p-3 backdrop-blur-xl shadow-[0_30px_80px_-34px_rgba(14,116,144,0.18)]"
                 >
                   <DropdownMenuLabel className="px-2 pb-3 pt-1">
                     <div className="space-y-1">
@@ -250,13 +250,13 @@ export function AppShell() {
                   <div className="space-y-1 p-1">
                     {isVisible("super_admin") ? (
                       <>
-                        <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950">
+                        <DropdownMenuItem asChild className="rounded-xl bg-white/92 px-3 py-2.5 text-slate-700 hover:bg-sky-50/90 hover:text-sky-950 focus:bg-sky-50/90 focus:text-sky-950">
                           <NavLink to="/users" className="flex items-center gap-2.5">
                             <ShieldCheck className="h-4 w-4" />
                             Users
                           </NavLink>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950">
+                        <DropdownMenuItem asChild className="rounded-xl bg-white/92 px-3 py-2.5 text-slate-700 hover:bg-sky-50/90 hover:text-sky-950 focus:bg-sky-50/90 focus:text-sky-950">
                           <NavLink to="/super-admin" className="flex items-center gap-2.5">
                             <Shield className="h-4 w-4" />
                             Platform
@@ -265,7 +265,7 @@ export function AppShell() {
                       </>
                     ) : null}
                     {isVisible("admin") ? (
-                      <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950">
+                      <DropdownMenuItem asChild className="rounded-xl bg-white/92 px-3 py-2.5 text-slate-700 hover:bg-sky-50/90 hover:text-sky-950 focus:bg-sky-50/90 focus:text-sky-950">
                         <NavLink to="/admin-studio" className="flex items-center gap-2.5">
                           <Settings2 className="h-4 w-4" />
                           Rooms Admin
@@ -273,13 +273,13 @@ export function AppShell() {
                       </DropdownMenuItem>
                     ) : null}
                     <DropdownMenuItem
-                      className="rounded-xl px-3 py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-950"
+                      className="rounded-xl bg-white/92 px-3 py-2.5 text-slate-700 hover:bg-sky-50/90 hover:text-sky-950 focus:bg-sky-50/90 focus:text-sky-950"
                       onSelect={() => void revokeAllSessions()}
                     >
                       Revoke all sessions
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="rounded-xl px-3 py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700"
+                      className="rounded-xl bg-white/92 px-3 py-2.5 text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700"
                       onSelect={() => void logout()}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
