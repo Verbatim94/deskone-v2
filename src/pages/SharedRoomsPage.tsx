@@ -41,7 +41,15 @@ export default function SharedRoomsPage() {
   const navigate = useNavigate();
   const { activeOrganization, activeOrganizationId } = useAuth();
   const [date, setDate] = useState<Date>(getToday);
+  const [activityFocus, setActivityFocus] = useState<"all" | "full" | "am" | "pm" | "offices">("all");
   const dateIso = useMemo(() => formatIsoDate(date), [date]);
+  const weeklyWindow = useMemo(
+    () => ({
+      fromDate: formatIsoDate(subDays(date, 3)),
+      toDate: formatIsoDate(addDays(date, 3)),
+    }),
+    [date],
+  );
 
   const roomsQuery = useQuery({
     queryKey: ["shared-rooms-overview", activeOrganizationId],
@@ -57,6 +65,17 @@ export default function SharedRoomsPage() {
         organizationId: activeOrganizationId!,
         fromDate: dateIso,
         toDate: dateIso,
+      }),
+  });
+
+  const weeklyActivityQuery = useQuery({
+    queryKey: ["shared-rooms-activity-week", activeOrganizationId, weeklyWindow.fromDate, weeklyWindow.toDate],
+    enabled: Boolean(activeOrganizationId),
+    queryFn: () =>
+      getMySchedule({
+        organizationId: activeOrganizationId!,
+        fromDate: weeklyWindow.fromDate,
+        toDate: weeklyWindow.toDate,
       }),
   });
 
@@ -93,8 +112,19 @@ export default function SharedRoomsPage() {
 
   const roomReservations = activityQuery.data?.roomReservations ?? [];
   const officeBookings = activityQuery.data?.officeBookings ?? [];
+  const weeklyRoomReservations = weeklyActivityQuery.data?.roomReservations ?? [];
+  const weeklyOfficeBookings = weeklyActivityQuery.data?.officeBookings ?? [];
   const totalActivities = roomReservations.length + officeBookings.length;
   const roomShare = totalActivities ? Math.round((roomReservations.length / totalActivities) * 100) : 0;
+  const focusedRooms = useMemo(() => {
+    if (activityFocus === "all" || activityFocus === "offices") {
+      return roomsWithAvailability;
+    }
+
+    return roomsWithAvailability.filter((room) =>
+      roomReservations.some((reservation) => reservation.roomName === room.name && reservation.segment === activityFocus),
+    );
+  }, [activityFocus, roomReservations, roomsWithAvailability]);
   const roomActivityBreakdown = useMemo(() => {
     const grouped = new Map<string, number>();
 
@@ -120,12 +150,33 @@ export default function SharedRoomsPage() {
     }
 
     return [
-      { label: "Full day", count: counters.full, tone: "bg-violet-500" },
-      { label: "Morning", count: counters.am, tone: "bg-sky-500" },
-      { label: "Afternoon", count: counters.pm, tone: "bg-pink-500" },
-      { label: "Offices", count: counters.offices, tone: "bg-orange-400" },
+      { key: "full", label: "Full day", count: counters.full, tone: "bg-violet-500" },
+      { key: "am", label: "Morning", count: counters.am, tone: "bg-sky-500" },
+      { key: "pm", label: "Afternoon", count: counters.pm, tone: "bg-pink-500" },
+      { key: "offices", label: "Offices", count: counters.offices, tone: "bg-orange-400" },
     ];
   }, [officeBookings.length, roomReservations]);
+  const weeklyActivityTrend = useMemo(() => {
+    const days = Array.from({ length: 7 }, (_, index) => addDays(subDays(date, 3), index));
+
+    return days.map((day) => {
+      const dayKey = formatIsoDate(day);
+      const roomCount = weeklyRoomReservations.filter((reservation) => reservation.dateStart === dayKey).length;
+      const officeCount = weeklyOfficeBookings.filter(
+        (booking) => format(new Date(booking.startsAt), "yyyy-MM-dd") === dayKey,
+      ).length;
+      return {
+        day,
+        label: format(day, "EE"),
+        dateLabel: format(day, "dd MMM"),
+        total: roomCount + officeCount,
+        roomCount,
+        officeCount,
+        isCurrent: dayKey === dateIso,
+      };
+    });
+  }, [date, dateIso, weeklyOfficeBookings, weeklyRoomReservations]);
+  const maxWeeklyTotal = Math.max(...weeklyActivityTrend.map((entry) => entry.total), 1);
   const isLoadingAvailability =
     roomsQuery.isLoading || availabilityQueries.some((query) => query.isLoading && !query.data);
 
@@ -201,7 +252,7 @@ export default function SharedRoomsPage() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {roomsWithAvailability.map((room, index) => (
+              {focusedRooms.map((room, index) => (
                 <button
                   key={room.id}
                   type="button"
@@ -224,7 +275,10 @@ export default function SharedRoomsPage() {
                   </div>
 
                   <p className="mt-3 text-sm leading-6 text-slate-500">
-                    {room.description ?? "Shared room ready for booking."}
+                    {room.description ??
+                      (activityFocus === "offices"
+                        ? "Desk map available even when your office activity is the main focus."
+                        : "Shared room ready for booking.")}
                   </p>
 
                   <div className="mt-5 h-1.5 rounded-full bg-slate-100">
@@ -307,9 +361,15 @@ export default function SharedRoomsPage() {
                     {roomActivityBreakdown.length ? (
                       roomActivityBreakdown.map((entry) => {
                         const percentage = roomReservations.length ? Math.round((entry.count / roomReservations.length) * 100) : 0;
+                        const linkedRoom = roomsWithAvailability.find((room) => room.name === entry.label);
 
                         return (
-                          <div key={entry.label} className="space-y-2">
+                          <button
+                            key={entry.label}
+                            type="button"
+                            onClick={() => linkedRoom && navigate(`/rooms?room=${linkedRoom.id}`)}
+                            className="w-full space-y-2 text-left transition hover:opacity-90"
+                          >
                             <div className="flex items-center justify-between gap-3 text-sm">
                               <span className="truncate font-medium text-slate-700">{entry.label}</span>
                               <span className="text-slate-500">{entry.count}</span>
@@ -320,12 +380,12 @@ export default function SharedRoomsPage() {
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
-                          </div>
+                          </button>
                         );
                       })
                     ) : (
                       <div className="rounded-[1.15rem] border border-dashed border-slate-200 bg-white/80 p-4 text-sm text-slate-500">
-                        No room reservations yet for this date.
+                        No room reservations yet for this date. If you book a desk, it will show up here room by room.
                       </div>
                     )}
                   </div>
@@ -342,12 +402,61 @@ export default function SharedRoomsPage() {
                 </div>
                 <div className="mt-5 grid gap-4 sm:grid-cols-4">
                   {segmentActivityBreakdown.map((entry) => (
-                    <div key={entry.label} className="rounded-[1.2rem] border border-white/80 bg-white/90 p-4 shadow-sm">
+                    <button
+                      key={entry.label}
+                      type="button"
+                      onClick={() =>
+                        setActivityFocus((current) =>
+                          current === entry.key ? "all" : (entry.key as "full" | "am" | "pm" | "offices"),
+                        )
+                      }
+                      className={cn(
+                        "rounded-[1.2rem] border border-white/80 bg-white/90 p-4 text-left shadow-sm transition-all hover:-translate-y-0.5",
+                        activityFocus === entry.key && "border-sky-200 ring-2 ring-sky-100",
+                      )}
+                    >
                       <div className={cn("h-2 rounded-full", entry.tone)} />
                       <p className="mt-4 text-2xl font-semibold text-slate-950">{entry.count}</p>
                       <p className="mt-1 text-sm text-slate-500">{entry.label}</p>
-                    </div>
+                    </button>
                   ))}
+                </div>
+                <div className="mt-5 rounded-[1.3rem] border border-white/80 bg-white/90 p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">7-day pulse</p>
+                      <p className="mt-1 text-sm font-medium text-slate-950">
+                        {weeklyActivityTrend.some((entry) => entry.total > 0)
+                          ? "A compact look at your activity rhythm around this day"
+                          : "No bookings in this 7-day window yet"}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="rounded-full border-slate-200 bg-white px-3 py-1 text-slate-600">
+                      {activityFocus === "all" ? "All activity" : "Focused view"}
+                    </Badge>
+                  </div>
+                  <div className="mt-5 grid grid-cols-7 gap-3">
+                    {weeklyActivityTrend.map((entry) => (
+                      <button
+                        key={entry.dateLabel}
+                        type="button"
+                        onClick={() => setDate(entry.day)}
+                        className={cn(
+                          "rounded-[1rem] border border-slate-100 bg-slate-50/80 px-2 py-3 text-center transition-all hover:-translate-y-0.5 hover:bg-white",
+                          entry.isCurrent && "border-violet-200 bg-violet-50/90",
+                        )}
+                      >
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">{entry.label}</p>
+                        <div className="mx-auto mt-3 flex h-16 w-4 items-end rounded-full bg-slate-100 p-1">
+                          <div
+                            className="w-full rounded-full bg-[linear-gradient(180deg,#7c3aed,#38bdf8)]"
+                            style={{ height: `${Math.max(16, Math.round((entry.total / maxWeeklyTotal) * 100))}%` }}
+                          />
+                        </div>
+                        <p className="mt-3 text-sm font-semibold text-slate-950">{entry.total}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
